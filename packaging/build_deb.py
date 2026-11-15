@@ -13,7 +13,7 @@ import tarfile
 
 ROOT = Path(__file__).resolve().parents[1]
 MODULES = ('klip.py', 'preferences.py', 'geometry_tools.py', 'icons.py',
-           'textbox.py', 'ui_spacing.py', 'watermark.py', 'ocr.py')
+           'textbox.py', 'ui_spacing.py', 'watermark.py', 'ocr.py', 'theme.py')
 
 
 def archive(files):

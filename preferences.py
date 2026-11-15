@@ -7,6 +7,8 @@ import subprocess
 import sys
 from pathlib import Path
 from ui_spacing import polish_inputs
+from theme import stylesheet
+from icons import tool_icon
 
 from PySide6.QtCore import QSettings, QStandardPaths, QSize, Qt
 from PySide6.QtGui import QColor, QKeySequence, QIcon, QPixmap, QPainter, QPen
@@ -138,72 +140,52 @@ class ControlPanel(QWidget):
         self.prefs = prefs
         self.changed = changed
         self.setWindowTitle('Klip · Control panel')
-        self.setStyleSheet('''
-            ControlPanel { background: #171b27; color: #eef0ff; }
-            QLabel, QCheckBox { color: #eef0ff; }
-            QListWidget { background: #202638; color: #bfc9e0; border: 0; border-radius: 8px; padding: 6px; }
-            QListWidget::item { padding: 0px 12px; border: 0; }
-            QListWidget::item:selected { background: #6254bd; color: white; border-radius: 6px; }
-            QListWidget::item:focus { outline: none; }
-            QLineEdit, QSpinBox, QComboBox, QKeySequenceEdit { background: #262d40; color: #eef0ff; border: 1px solid #46516d; border-radius: 4px; padding: 5px; }
-            QPushButton { background: #34405c; color: #eef0ff; border: 1px solid #526385; padding: 8px 12px; border-radius: 5px; }
-            QPushButton:hover { background: #514797; }
-            QPushButton:disabled, QCheckBox:disabled { color: #778298; }
-            QScrollArea { border: 1px solid #46516d; background: #171b27; }
-            QCheckBox { spacing: 10px; padding: 4px 0; }
-            QCheckBox::indicator { width: 18px; height: 18px; border: 1px solid #7181a1; border-radius: 4px; background: #262d40; }
-            QCheckBox::indicator:checked { background: #8e7aff; border: 2px solid #c3b9ff; }
-        ''')
-        assets = Path(__file__).absolute().parent / 'assets'
-        down = (assets / 'chevron-down.svg').as_posix()
-        up = (assets / 'chevron-up.svg').as_posix()
-        check = (assets / 'check.svg').as_posix()
-        self.setStyleSheet(self.styleSheet() + '''
-            QLineEdit, QSpinBox, QComboBox { min-height: 24px; padding: 6px 10px; selection-background-color: #6254bd; }
-            QLineEdit:focus, QSpinBox:focus, QComboBox:focus { border: 1px solid #a394ff; }
-            QPushButton { min-height: 22px; }
-            QPushButton:focus { border: 1px solid #b6aaff; }
-            QComboBox { padding-right: 38px; }
-            QComboBox::drop-down { subcontrol-origin: border; subcontrol-position: top right; width: 32px; border-left: 1px solid #46516d; border-top-right-radius: 4px; border-bottom-right-radius: 4px; background: #34405c; }
-            QComboBox::down-arrow { image: url("DOWN"); width: 16px; height: 16px; }
-            QComboBox QAbstractItemView { background: #262d40; color: #eef0ff; selection-background-color: #6254bd; padding: 4px; border: 1px solid #526385; }
-            QSpinBox { padding-right: 36px; }
-            QSpinBox::up-button { subcontrol-origin: border; subcontrol-position: top right; width: 30px; height: 19px; border-left: 1px solid #46516d; border-bottom: 1px solid #46516d; background: #34405c; }
-            QSpinBox::down-button { subcontrol-origin: border; subcontrol-position: bottom right; width: 30px; height: 19px; border-left: 1px solid #46516d; background: #34405c; }
-            QSpinBox::up-button:hover, QSpinBox::down-button:hover, QComboBox::drop-down:hover { background: #514797; }
-            QSpinBox::up-arrow { image: url("UP"); width: 14px; height: 14px; }
-            QSpinBox::down-arrow { image: url("DOWN"); width: 14px; height: 14px; }
-            QCheckBox::indicator:checked { image: url("CHECK"); background: #7965dc; border: 1px solid #b4a6ff; }
-        '''.replace('DOWN', down).replace('UP', up).replace('CHECK', check))
-        self.resize(980, 740)
+        self.setObjectName('controlPanel')
+        self.setStyleSheet(stylesheet())
+        self.resize(1100, 760)
         self.setMinimumSize(880, 680)
         root = QVBoxLayout(self)
-        root.setContentsMargins(24, 18, 24, 18)
-        root.setSpacing(18)
-        title = QLabel('Klip  /  Control panel')
-        title.setStyleSheet('font-size: 24px; font-weight: 600; padding: 12px;')
+        root.setContentsMargins(0, 0, 0, 0)
+        root.setSpacing(0)
+        title = QLabel('<span style="color: #be0037; font-weight: 600;">Klip</span> / Control panel')
+        title.setStyleSheet('font-size: 19px; padding: 20px 24px; border-bottom: 1px solid #edf0f6;')
         root.addWidget(title)
         body = QHBoxLayout()
         body.setSpacing(24)
         root.addLayout(body, 1)
         nav = QListWidget()
         nav.addItems(['General', 'Shortcuts', 'About'])
-        nav.setFixedWidth(172)
+        for index, name in enumerate(('General', 'Shortcuts', 'About')):
+            nav.item(index).setIcon(tool_icon(name))
+        nav.setIconSize(QSize(18,18))
+        nav.setFixedWidth(200)
         nav.setSpacing(6)
         nav.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         nav.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         for index in range(nav.count()):
             nav.item(index).setSizeHint(QSize(148, max(46, nav.fontMetrics().height()+24)))
-        body.addWidget(nav)
+        sidebar = QWidget()
+        sidebar.setFixedWidth(200)
+        sidebar.setStyleSheet('background: #eff4ff;')
+        sidebar_layout = QVBoxLayout(sidebar)
+        sidebar_layout.setContentsMargins(0,12,0,0)
+        sidebar_layout.setSpacing(4)
+        nav_title = QLabel('CONFIGURATION')
+        nav_title.setStyleSheet('font-size: 10px; color: #64748b; padding: 6px 16px;')
+        sidebar_layout.addWidget(nav_title)
+        sidebar_layout.addWidget(nav,1)
+        body.addWidget(sidebar)
         stack = QStackedWidget()
-        stack.setMaximumWidth(980)
+        stack.setMaximumWidth(1060)
+        stack.setContentsMargins(0, 20, 24, 20)
         body.addWidget(stack, 1)
         nav.currentRowChanged.connect(stack.setCurrentIndex)
         self.general = QWidget()
+        self.general.setObjectName('card')
         form = QFormLayout(self.general)
-        form.setContentsMargins(12, 12, 12, 12)
-        form.setHorizontalSpacing(24)
-        form.setVerticalSpacing(18)
+        form.setContentsMargins(24, 24, 24, 24)
+        form.setHorizontalSpacing(30)
+        form.setVerticalSpacing(20)
         form.setLabelAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
         form.setFormAlignment(Qt.AlignmentFlag.AlignTop)
         self.folder = QLineEdit(prefs.get('folder'))
@@ -244,15 +226,19 @@ class ControlPanel(QWidget):
         form.addRow(self.startup)
         save = QPushButton('Save general settings')
         save.setFixedWidth(200)
+        save.setObjectName('primary')
         save.clicked.connect(self.save_general)
         form.addRow('', save)
         note = QLabel('Changes apply to new captures. Closing this panel keeps Klip in the tray.')
         note.setWordWrap(True)
-        note.setStyleSheet('color: #a9b6d0; padding-top: 8px;')
+        note.setStyleSheet('color: #64748b; padding-top: 8px;')
         form.addRow(note)
         stack.addWidget(self.general)
         shortcuts = QWidget()
+        shortcuts.setObjectName('card')
         layout = QVBoxLayout(shortcuts)
+        layout.setContentsMargins(20,20,20,20)
+        layout.setSpacing(12)
         layout.addWidget(QLabel('Global capture shortcut · XFCE integration'))
         self.capture_key = QKeySequenceEdit(QKeySequence(prefs.get('capture_key', '')))
         self.capture_key.setMaximumSequenceLength(1)
@@ -266,6 +252,11 @@ class ControlPanel(QWidget):
         layout.addWidget(hint)
         command = QLineEdit(launch_command())
         command.setReadOnly(True)
+        from PySide6.QtGui import QFontDatabase
+        data_font = QFontDatabase.systemFont(QFontDatabase.SystemFont.FixedFont)
+        command.setFont(data_font)
+        self.folder.setFont(data_font)
+        self.capture_key.setFont(data_font)
         command.setCursorPosition(0)
         layout.addWidget(QLabel('Capture command for other desktops:'))
         layout.addWidget(command)
@@ -273,12 +264,14 @@ class ControlPanel(QWidget):
         scroller = QScrollArea()
         scroller.setWidgetResizable(True)
         fields = QWidget()
-        fields.setStyleSheet('background: #171b27;')
+        fields.setObjectName('shortcutFields')
+        fields.setStyleSheet('QWidget#shortcutFields { background: white; }')
         key_form = QFormLayout(fields)
         self.keys = {}
         for name in KEYS:
             field = QKeySequenceEdit(QKeySequence(prefs.shortcut(name)))
             field.setMaximumSequenceLength(1)
+            field.setFont(data_font)
             field.setClearButtonEnabled(True)
             self.keys[name] = field
             key_form.addRow(name, field)
@@ -289,12 +282,13 @@ class ControlPanel(QWidget):
         defaults.clicked.connect(self.restore_keys)
         buttons.addWidget(defaults)
         save_keys = QPushButton('Save editor shortcuts')
+        save_keys.setObjectName('primary')
         save_keys.clicked.connect(self.save_keys)
         buttons.addWidget(save_keys)
         layout.addLayout(buttons)
         stack.addWidget(shortcuts)
         about = QWidget()
-        about.setStyleSheet('background: #171b27;')
+        about.setStyleSheet('background: white;')
         about_layout = QVBoxLayout(about)
         about_layout.setContentsMargins(28, 24, 28, 20)
         about_layout.setSpacing(0)
@@ -311,14 +305,14 @@ class ControlPanel(QWidget):
 
         logo = label('', gap=16)
         logo.setPixmap(QIcon(str(Path(__file__).parent / 'assets' / 'klip.svg')).pixmap(64, 64))
-        label('Klip', 'font-size: 36px; font-weight: 600; color: #f0edff;', 8)
-        label('Capture. Mark. Share.', 'font-size: 15px; color: #b6bfd3;', 12)
-        label('v0.2.0 · Alpha', 'font-size: 11px; color: #a99bdf;', 24)
-        label('Screenshot capture and annotation for Linux.', 'color: #a9b3c8;', 28)
-        label('Made by Manish', 'color: #e2e6f1;', 6)
+        label('Klip', 'font-size: 36px; font-weight: 600; color: #0b1c30;', 8)
+        label('Capture. Mark. Share.', 'font-size: 15px; color: #64748b;', 12)
+        label('v0.2.0 · Alpha', 'font-size: 11px; color: #be0037;', 24)
+        label('Screenshot capture and annotation for Linux.', 'color: #64748b;', 28)
+        label('Made by Manish', 'color: #0b1c30;', 6)
 
         def linked(text, gap=12, muted=False):
-            color = '#929db5' if muted else '#baaaff'
+            color = '#64748b' if muted else '#be0037'
             item = label(text.replace('<a href=', '<a style="color: '+color+'; text-decoration: none;" href='), '', gap)
             item.setOpenExternalLinks(True)
             return item
@@ -327,28 +321,34 @@ class ControlPanel(QWidget):
         linked('<a href="https://github.com/workwithmanish/klip">GitHub</a> &nbsp;&nbsp; · &nbsp;&nbsp; '
                '<a href="https://github.com/workwithmanish/klip/issues">Report an issue</a> &nbsp;&nbsp; · &nbsp;&nbsp; '
                '<a href="https://github.com/workwithmanish/klip/releases">Releases</a>', 28)
-        label('Local capture. Offline OCR.', 'font-size: 12px; color: #929db5;', 0)
+        label('Local capture. Offline OCR.', 'font-size: 12px; color: #64748b;', 0)
         about_layout.addStretch(2)
         linked('© 2026 Manish &nbsp; · &nbsp; '
                '<a href="https://github.com/workwithmanish/klip/blob/main/LICENSE">MIT License</a> &nbsp; · &nbsp; '
                '<a href="https://github.com/workwithmanish/klip/blob/main/THIRD_PARTY.md">Third-party notices</a>', 0, True)
         about_scroll = QScrollArea()
         about_scroll.setWidgetResizable(True)
-        about_scroll.setStyleSheet('QScrollArea { border: none; background: #171b27; }')
+        about_scroll.setStyleSheet('QScrollArea { border: none; background: white; }')
         about_scroll.setWidget(about)
         stack.addWidget(about_scroll)
         nav.setCurrentRow(0)
-        footer = QHBoxLayout()
+        footer_widget = QWidget()
+        footer_widget.setObjectName('pageFooter')
+        footer = QHBoxLayout(footer_widget)
+        footer.setContentsMargins(20,12,20,12)
+        footer.setSpacing(12)
         self.status = QLabel('Ready')
         self.status.setWordWrap(True)
         footer.addWidget(self.status, 1)
         capture_button = QPushButton('Capture area')
+        capture_button.setObjectName('primary')
         capture_button.clicked.connect(lambda: (self.hide(), delayed_capture(capture)))
-        footer.addWidget(capture_button)
+        
         close = QPushButton('Close')
         close.clicked.connect(self.close)
         footer.addWidget(close)
-        root.addLayout(footer)
+        footer.addWidget(capture_button)
+        root.addWidget(footer_widget)
         polish_inputs(self)
 
     def browse(self):

@@ -9,8 +9,23 @@ def tool_icon(name):
     p = QPainter(pix)
     p.setRenderHint(QPainter.RenderHint.Antialiasing)
     p.scale(2, 2)
-    p.setPen(QPen(QColor('#edf1ff'), 2, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap, Qt.PenJoinStyle.RoundJoin))
-    if name == 'Select':
+    p.setPen(QPen(QColor('#334155'), 2, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap, Qt.PenJoinStyle.RoundJoin))
+    if name == 'General':
+        for y, x in ((8,11),(16,22),(24,15)):
+            p.drawLine(5,y,27,y)
+            p.setBrush(QColor('#eff4ff'))
+            p.drawEllipse(x-3,y-3,6,6)
+    elif name == 'Shortcuts':
+        p.drawRoundedRect(3,7,26,19,2,2)
+        for y in (12,17):
+            for x in (8,13,18,23):
+                p.drawPoint(x,y)
+        p.drawLine(10,22,22,22)
+    elif name == 'About':
+        p.drawEllipse(4,4,24,24)
+        p.drawPoint(16,10)
+        p.drawLine(16,15,16,23)
+    elif name == 'Select':
         p.drawPolygon(QPolygonF([QPointF(7,4), QPointF(25,17), QPointF(17,18), QPointF(13,27)]))
     elif name in ('Pen', 'Highlight'):
         p.drawPolygon(QPolygonF([QPointF(8, 20), QPointF(21, 7), QPointF(26, 12), QPointF(13, 25), QPointF(6, 27)]))
@@ -34,7 +49,7 @@ def tool_icon(name):
     elif name == 'Pixelate':
         for y in range(3):
             for x in range(3):
-                p.fillRect(5+x*8, 5+y*8, 6, 6, QColor(['#edf1ff', '#8e9bbd', '#5b6888'][(x+y)%3]))
+                p.fillRect(5+x*8, 5+y*8, 6, 6, QColor(['#334155', '#8e9bbd', '#5b6888'][(x+y)%3]))
     elif name == 'Color':
         for x, color in enumerate(('#ff526b', '#f5d95e', '#6de0ad', '#82aaff')):
             p.fillRect(5+x*6, 6, 6, 20, QColor(color))

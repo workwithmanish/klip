@@ -7,6 +7,7 @@ from PySide6.QtGui import QImage, QPainter, QColor
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
     QComboBox, QCheckBox, QPushButton, QPlainTextEdit, QApplication, QFileDialog)
 from ui_spacing import polish_inputs
+from theme import stylesheet
 
 
 def prepare_image(image, improve):
@@ -51,7 +52,8 @@ class OCRWindow(QWidget):
         self.setWindowTitle('Klip · Extract text (OCR)')
         self.resize(820,600)
         self.setMinimumSize(620,440)
-        self.setStyleSheet('QWidget { background: #171b27; color: #eef0ff; } QPlainTextEdit, QComboBox { background: #262d40; border: 1px solid #526385; border-radius: 5px; padding: 8px; } QPushButton { background: #34405c; border: 1px solid #526385; border-radius: 5px; padding: 9px 14px; } QPushButton:hover { background: #514797; } QPushButton:disabled { color: #778298; } QCheckBox { spacing: 8px; }')
+        self.setObjectName('ocrWindow')
+        self.setStyleSheet(stylesheet())
         root = QVBoxLayout(self)
         root.setContentsMargins(20,20,20,20)
         root.setSpacing(14)
@@ -86,6 +88,7 @@ class OCRWindow(QWidget):
         buttons = QHBoxLayout()
         buttons.setSpacing(12)
         self.extract = QPushButton('Extract text / Retry')
+        self.extract.setObjectName('primary')
         self.extract.clicked.connect(self.start)
         self.cancel = QPushButton('Cancel OCR')
         self.cancel.setEnabled(False)

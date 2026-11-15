@@ -11,6 +11,7 @@ from textbox import TextBox
 from watermark import timestamp_label, paint_watermark
 from ui_spacing import polish_inputs
 from ocr import show_ocr
+from theme import stylesheet
 from geometry_tools import handles, hit_handle, paint_handles, transform_rect, cursor_for
 
 from PySide6.QtCore import Qt, QRect, QPoint, QTimer, Signal, QLockFile, QDir, QSize
@@ -397,7 +398,7 @@ class Editor(QMainWindow):
         ocr_action = bar2.addAction('Extract text (OCR)', self.extract_text)
         ocr_action.setToolTip('Read text from this image locally using Tesseract (excludes the timestamp watermark)')
         self.watermark_toggle = QCheckBox('Timestamp')
-        self.watermark_toggle.setStyleSheet('color: #eef0ff; padding: 8px;')
+        self.watermark_toggle.setStyleSheet('padding: 4px 8px;')
         self.watermark_toggle.setToolTip('Show the capture timestamp at bottom-right using your system timezone')
         bar2.addWidget(self.watermark_toggle)
         self.watermark_font = QSpinBox()
@@ -418,7 +419,8 @@ class Editor(QMainWindow):
         watermark_layout.setSpacing(16)
         watermark_layout.addWidget(self.watermark_font)
         watermark_layout.addWidget(self.watermark_alpha)
-        watermark_controls.setStyleSheet(controls.styleSheet())
+        controls.setStyleSheet('')
+        watermark_controls.setStyleSheet('')
         font_action = bar2.addWidget(watermark_controls)
         alpha_action = font_action
         font_action.setVisible(False)
@@ -626,7 +628,7 @@ class Selection(QWidget):
         self.setMouseTracking(True)
         self.confirm_bar = QWidget(self)
         self.confirm_bar.setCursor(Qt.CursorShape.ArrowCursor)
-        self.confirm_bar.setStyleSheet('QWidget { background: #222838; color: white; } QPushButton { padding: 8px 16px; border: 1px solid #8794c4; border-radius: 4px; background: #6254bd; color: white; }')
+        self.confirm_bar.setStyleSheet('QWidget { background: #eff4ff; } QPushButton { padding: 8px 16px; border: none; border-radius: 4px; background: #e11d48; color: white; }')
         layout = QHBoxLayout(self.confirm_bar)
         layout.setContentsMargins(6,6,6,6)
         capture = QPushButton('Capture')
@@ -760,7 +762,7 @@ class Controller:
         self.overlays = []
         self.editors = []
         icon_image = QPixmap(64, 64)
-        icon_image.fill(QColor('#7160e8'))
+        icon_image.fill(QColor('#be0037'))
         p = QPainter(icon_image)
         p.setPen(QPen(Qt.GlobalColor.white, 5))
         p.drawRect(15, 18, 34, 28)
@@ -851,7 +853,7 @@ def main():
     app.setApplicationName('Klip')
     app.setQuitOnLastWindowClosed(False)
     app.setStyle('Fusion')
-    app.setStyleSheet('QMainWindow, QToolBar, QMenu { background: #222532; color: #eef0ff; } QToolButton { padding: 8px; color: #eef0ff; } QToolButton:checked { background: #6254bd; border-radius: 5px; } QScrollArea { background: #151722; }')
+    app.setStyleSheet(stylesheet())
     server = None
     lock = None
     if not args.open:
