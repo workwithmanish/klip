@@ -38,6 +38,7 @@ class PortalProtocolTests(unittest.IsolatedAsyncioTestCase):
             @signal()
             def Response(self,code:'u',data:'a{sv}')->'ua{sv}':return [code,data]
         request=Request()
+        response_code=[0]
         request_path='/org/freedesktop/portal/desktop/request/test/klip_mock'
         class Registry(ServiceInterface):
             def __init__(self):super().__init__('org.freedesktop.host.portal.Registry')
@@ -49,7 +50,7 @@ class PortalProtocolTests(unittest.IsolatedAsyncioTestCase):
             @method()
             def Screenshot(self,parent:'s',options:'a{sv}')->'o':
                 if not options['interactive'].value:raise ValueError('Must request interactive capture')
-                asyncio.get_running_loop().call_later(.05,lambda:request.Response(0,{'uri':Variant('s','file:///tmp/test.png')}))
+                asyncio.get_running_loop().call_later(.05,lambda:request.Response(response_code[0],{'uri':Variant('s','file:///tmp/test.png')}))
                 return request_path
         bus=await MessageBus().connect()
         await bus.request_name(portal_helper.SERVICE)
@@ -60,4 +61,10 @@ class PortalProtocolTests(unittest.IsolatedAsyncioTestCase):
             with patch.object(portal_helper,'emit',side_effect=lambda **data:emitted.append(data)):
                 await asyncio.wait_for(portal_helper.run('screenshot'),5)
             self.assertEqual(emitted,[{'event':'screenshot','uri':'file:///tmp/test.png'}])
+            response_code[0]=1
+            with self.assertRaises(PermissionError):
+                await asyncio.wait_for(portal_helper.run('screenshot'),5)
+            response_code[0]=2
+            with self.assertRaises(RuntimeError):
+                await asyncio.wait_for(portal_helper.run('screenshot'),5)
         finally:bus.disconnect()

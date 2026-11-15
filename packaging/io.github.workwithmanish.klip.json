@@ -56,8 +56,9 @@
         }
       ],
       "post-install": [
-        "install -Dm644 leptonica-license.txt /app/share/licenses/leptonica/LICENSE"
-      ]
+        "install -Dm644 ../leptonica-license.txt /app/share/licenses/leptonica/LICENSE"
+      ],
+      "builddir": true
     },
     {
       "name": "tesseract",
@@ -76,8 +77,9 @@
         }
       ],
       "post-install": [
-        "install -Dm644 LICENSE /app/share/licenses/tesseract/LICENSE"
-      ]
+        "install -Dm644 ../LICENSE /app/share/licenses/tesseract/LICENSE"
+      ],
+      "builddir": true
     },
     {
       "name": "ocr-language-data",
@@ -130,7 +132,11 @@
             "build",
             "__pycache__",
             ".venv",
-            "logo.png"
+            "logo.png",
+            "flatpak-build",
+            "flatpak-repo",
+            ".flatpak-builder",
+            "release-assets"
           ]
         }
       ]

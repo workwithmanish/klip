@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.3.0 — compatibility preview
+
+- Experimental permission-based Screenshot portal capture on Wayland and in Flatpak.
+- Desktop portal capture/OCR shortcuts with manual keyboard-settings fallback.
+- Cross-distro x86_64 Flatpak bundling Qt/PySide6, Tesseract and English/Hindi data.
+- Native Debian package and existing X11 region overlay retained.
+- Automated D-Bus success/cancel/denial checks; Fedora/GNOME and KDE desktop validation still pending.
+- GitHub pre-release build/asset automation.
+
+
 ## 0.2.1 — development
 
 - OCR loading view with animated activity indicator, elapsed time and cancellation.
