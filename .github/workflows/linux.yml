@@ -1,0 +1,33 @@
+name: Linux package checks
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  debian:
+    runs-on: ubuntu-latest
+    container: debian:13
+    steps:
+      - name: Install build tools
+        run: apt-get update && apt-get install -y --no-install-recommends ca-certificates git python3 desktop-file-utils
+      - uses: actions/checkout@v4
+      - name: Build and inspect package
+        run: |
+          python3 packaging/build_deb.py
+          dpkg-deb --info dist/klip_0.1.0_all.deb
+          dpkg-deb --contents dist/klip_0.1.0_all.deb
+          desktop-file-validate packaging/klip.desktop
+      - name: Install package and test installed modules
+        run: |
+          apt-get install -y ./dist/klip_0.1.0_all.deb python3-pyside6.qttest
+          QT_QPA_PLATFORM=offscreen KLIP_SOURCE=/usr/share/klip python3 -m unittest discover -s tests -v
+          QT_QPA_PLATFORM=offscreen /usr/bin/klip --help
+          apt-get remove -y klip
+          test ! -e /usr/bin/klip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: klip-development-deb
+          path: dist/*
+          if-no-files-found: error

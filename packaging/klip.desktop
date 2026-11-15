@@ -1,0 +1,21 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Klip
+GenericName=Screenshot Tool
+Comment=Capture and annotate your screen
+Exec=klip --background
+Icon=klip
+Terminal=false
+Categories=Graphics;Utility;
+Keywords=screenshot;capture;annotation;
+StartupNotify=false
+Actions=Capture;Settings;
+
+[Desktop Action Capture]
+Name=Capture area
+Exec=klip --capture
+
+[Desktop Action Settings]
+Name=Klip settings
+Exec=klip --settings

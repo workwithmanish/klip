@@ -1,0 +1,9 @@
+.venv/
+__pycache__/
+*.pyc
+dist/
+build/
+*.deb
+*.deb.sha256
+.pytest_cache/
+*.log
