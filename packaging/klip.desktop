@@ -10,7 +10,7 @@ Terminal=false
 Categories=Graphics;Utility;
 Keywords=screenshot;capture;annotation;
 StartupNotify=false
-Actions=Capture;Settings;
+Actions=Capture;OCR;Settings;
 
 [Desktop Action Capture]
 Name=Capture area
@@ -19,3 +19,7 @@ Exec=klip --capture
 [Desktop Action Settings]
 Name=Klip settings
 Exec=klip --settings
+
+[Desktop Action OCR]
+Name=Capture text (OCR)
+Exec=klip --ocr

@@ -16,12 +16,12 @@ jobs:
       - name: Build and inspect package
         run: |
           python3 packaging/build_deb.py
-          dpkg-deb --info dist/klip_0.1.0_all.deb
-          dpkg-deb --contents dist/klip_0.1.0_all.deb
+          dpkg-deb --info dist/klip_0.2.0_all.deb
+          dpkg-deb --contents dist/klip_0.2.0_all.deb
           desktop-file-validate packaging/klip.desktop
       - name: Install package and test installed modules
         run: |
-          if ! apt-get install -y ./dist/klip_0.1.0_all.deb python3-pyside6.qttest > /tmp/klip-install.log 2>&1; then
+          if ! apt-get install -y ./dist/klip_0.2.0_all.deb python3-pyside6.qttest fonts-dejavu-core tesseract-ocr-hin > /tmp/klip-install.log 2>&1; then
             grep -Ei 'error|unable|dpkg:|E:|klip' /tmp/klip-install.log | tail -n 8 | while IFS= read -r line; do printf '::error::%s\n' "$line"; done
             exit 1
           fi

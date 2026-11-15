@@ -15,3 +15,9 @@ distributions' license files.
 
 Icons in `icons.py` and `assets/` are original Klip artwork under MIT. No code,
 branding or artwork from the reference Windows application is included.
+
+Optional source-install OCR / required package OCR: Tesseract OCR is invoked
+as a separate local executable and is licensed under Apache-2.0. It is not
+vendored. Language data comes from separately installed distribution packages.
+See https://github.com/tesseract-ocr/tesseract/blob/main/LICENSE and the distro's
+installed copyright notices for the engine and trained language data.

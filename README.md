@@ -104,7 +104,7 @@ sudo apt install -y git python3
 git clone https://github.com/workwithmanish/klip.git "$HOME/klip-build"
 cd "$HOME/klip-build"
 python3 packaging/build_deb.py
-sudo apt install ./dist/klip_0.1.0_all.deb
+sudo apt install ./dist/klip_0.2.0_all.deb
 ```
 
 Use a different unused folder name if `~/klip-build` already exists. APT installs
@@ -121,7 +121,7 @@ For a later update, quit Klip and repeat the build/install from your build check
 cd "$HOME/klip-build"
 git pull --ff-only
 python3 packaging/build_deb.py
-sudo apt install ./dist/klip_0.1.0_all.deb
+sudo apt install ./dist/klip_0.2.0_all.deb
 ```
 
 The version/filename will change for future releases; use the name printed by
@@ -155,6 +155,36 @@ On desktops other than XFCE, global shortcuts must be configured manually in
 the desktop's keyboard settings using the appropriate capture command above.
 
 ## Your first screenshot
+
+### Extract text from a screenshot (OCR)
+
+In version 0.2.0 development builds, choose **tray → Capture text (OCR)** and
+select an area. Or click **Extract text (OCR)** in the image editor. Recognition
+runs locally; the editor timestamp watermark is excluded.
+
+Choose English, Hindi, or English + Hindi, then **Extract text / Retry**.
+Edit the recognized text, **Copy text**, or **Save .txt**. Retry replaces a
+successful result. Try Text block/Scattered text/Automatic layout or toggle
+image improvement if recognition is poor. OCR can make mistakes, especially
+in punctuation or code—review text before using it.
+
+The `.deb` installs English OCR dependencies. Source users install them once:
+
+```bash
+sudo apt install tesseract-ocr tesseract-ocr-eng
+```
+
+For Hindi, optionally install:
+
+```bash
+sudo apt install tesseract-ocr-hin
+```
+
+You can also run `klip --ocr` (package) or
+`~/klip/.venv/bin/python ~/klip/klip.py --ocr` (source). No Python OCR packages
+or cloud account are needed. A temporary local PNG is removed after processing.
+
+### Capture and annotate
 
 1. Tray icon → **Capture area**.
 2. Drag to select an area. Move it or resize it using the edge/corner handles.
@@ -209,7 +239,7 @@ Your saved screenshots are not deleted. User preferences are retained.
 
 Klip makes no network requests while capturing/editing. Captures stay local
 unless saved, copied, or shared. Pixelation is a visual effect, not guaranteed
-secure redaction. No OCR, true blur, or Wayland capture yet.
+secure redaction. No true blur or Wayland capture yet.
 
 [Developer/package details](docs/DEVELOPMENT.md) · [Contributing](CONTRIBUTING.md) ·
 [MIT license](LICENSE) · [Qt/PySide6 notices](THIRD_PARTY.md)

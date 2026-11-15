@@ -300,7 +300,7 @@ class ControlPanel(QWidget):
         heading = QLabel('Klip')
         heading.setStyleSheet('font-size: 32px; font-weight: 700; color: #c4b6ff;')
         about_layout.addWidget(heading)
-        tagline = QLabel('Capture. Mark. Share.  ·  Version 0.1.0 / Early development')
+        tagline = QLabel('Capture. Mark. Share.  ·  Version 0.2.0 / Early development')
         tagline.setWordWrap(True)
         tagline.setStyleSheet('color: #b4c0da; padding-bottom: 8px;')
         about_layout.addWidget(tagline)

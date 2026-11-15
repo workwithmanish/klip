@@ -10,6 +10,7 @@ from icons import tool_icon
 from textbox import TextBox
 from watermark import timestamp_label, paint_watermark
 from ui_spacing import polish_inputs
+from ocr import show_ocr
 from geometry_tools import handles, hit_handle, paint_handles, transform_rect, cursor_for
 
 from PySide6.QtCore import Qt, QRect, QPoint, QTimer, Signal, QLockFile, QDir, QSize
@@ -393,6 +394,8 @@ class Editor(QMainWindow):
             action.setShortcut(QKeySequence(shortcut))
             self.shortcut_actions[name] = action
         bar2.addSeparator()
+        ocr_action = bar2.addAction('Extract text (OCR)', self.extract_text)
+        ocr_action.setToolTip('Read text from this image locally using Tesseract (excludes the timestamp watermark)')
         self.watermark_toggle = QCheckBox('Timestamp')
         self.watermark_toggle.setStyleSheet('color: #eef0ff; padding: 8px;')
         self.watermark_toggle.setToolTip('Show the capture timestamp at bottom-right using your system timezone')
@@ -506,6 +509,16 @@ class Editor(QMainWindow):
         self.canvas.finish_text()
         QApplication.clipboard().setImage(self.canvas.export_image())
         self.statusBar().showMessage('Capture copied to clipboard', 4000)
+
+    def extract_text(self):
+        self.canvas.finish_text()
+        enabled = self.canvas.watermark_enabled
+        self.canvas.watermark_enabled = False
+        try:
+            image = self.canvas.export_image()
+        finally:
+            self.canvas.watermark_enabled = enabled
+        show_ocr(image)
 
     def save(self):
         self.canvas.finish_text()
@@ -759,6 +772,7 @@ class Controller:
         self.tray.setToolTip('Klip · Capture and annotate')
         menu = QMenu()
         menu.addAction('Capture area', self.capture)
+        menu.addAction('Capture text (OCR)', lambda: self.capture('ocr'))
         menu.addAction('Settings…', self.show_settings)
         menu.addSeparator()
         menu.addAction('Quit Klip', app.quit)
@@ -784,9 +798,10 @@ class Controller:
             overlay.deleteLater()
         self.overlays.clear()
 
-    def capture(self):
+    def capture(self, mode='edit'):
         if self.overlays:
             return
+        self.capture_mode = 'ocr' if mode == 'ocr' else 'edit'
         if os.environ.get('XDG_SESSION_TYPE') == 'wayland':
             QMessageBox.information(None, 'Klip · X11 required', 'This first version supports X11 capture. Log into an X11 desktop session to capture. Wayland portal support is planned.')
             return
@@ -796,13 +811,20 @@ class Controller:
                 self.cleanup()
                 QMessageBox.warning(None, 'Capture failed', 'The desktop did not provide a screenshot.')
                 return
-            overlay.selected.connect(self.edit)
+            overlay.selected.connect(self.capture_finished)
             overlay.cancelled.connect(self.cleanup)
             self.overlays.append(overlay)
         for overlay in self.overlays:
             overlay.show()
             overlay.raise_()
             overlay.activateWindow()
+
+    def capture_finished(self, image):
+        if self.capture_mode == 'ocr':
+            self.cleanup()
+            show_ocr(image)
+        else:
+            self.edit(image)
 
     def edit(self, image):
         self.cleanup()
@@ -820,6 +842,7 @@ class Controller:
 def main():
     parser = argparse.ArgumentParser(description='Klip screenshot tool')
     parser.add_argument('--capture', action='store_true', help='Capture immediately; signals an existing instance')
+    parser.add_argument('--ocr', action='store_true', help='Select a screen area and extract text locally')
     parser.add_argument('--settings', action='store_true', help='Open the Klip control panel')
     parser.add_argument('--background', action='store_true', help='Start quietly in the tray')
     parser.add_argument('--open', metavar='IMAGE', help='Open an image in the editor')
@@ -840,7 +863,7 @@ def main():
             if not socket.waitForConnected(1500):
                 print('Klip is starting or unavailable; try again.', file=sys.stderr)
                 return 1
-            socket.write(b'capture' if args.capture else b'settings' if not args.background else b'background')
+            socket.write(b'ocr' if args.ocr else b'capture' if args.capture else b'settings' if not args.background else b'background')
             socket.waitForBytesWritten(1500)
             socket.disconnectFromServer()
             return 0
@@ -871,11 +894,13 @@ def main():
                         return
                     data.extend(bytes(c.readAll()))
                     message = bytes(data)
-                    if done[0] or message not in (b'capture', b'settings', b'background'):
+                    if done[0] or message not in (b'capture', b'ocr', b'settings', b'background'):
                         return
                     done[0] = True
                     if message == b'capture':
                         QTimer.singleShot(150, controller.capture)
+                    elif message == b'ocr':
+                        QTimer.singleShot(150, lambda: controller.capture('ocr'))
                     elif message == b'settings':
                         controller.show_settings()
                     c.disconnectFromServer()
@@ -900,6 +925,8 @@ def main():
             return 1
         controller.edit(image)
         app.setQuitOnLastWindowClosed(True)
+    elif args.ocr:
+        QTimer.singleShot(200, lambda: controller.capture('ocr'))
     elif args.capture:
         QTimer.singleShot(200, controller.capture)
     elif args.settings or not args.background or not QSystemTrayIcon.isSystemTrayAvailable():
