@@ -761,14 +761,7 @@ class Controller:
         self.panel = None
         self.overlays = []
         self.editors = []
-        icon_image = QPixmap(64, 64)
-        icon_image.fill(QColor('#be0037'))
-        p = QPainter(icon_image)
-        p.setPen(QPen(Qt.GlobalColor.white, 5))
-        p.drawRect(15, 18, 34, 28)
-        p.drawLine(26, 12, 26, 25)
-        p.end()
-        self.icon = QIcon(icon_image)
+        self.icon = QIcon(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'assets', 'klip.png'))
         app.setWindowIcon(self.icon)
         self.tray = QSystemTrayIcon(self.icon)
         self.tray.setToolTip('Klip · Capture and annotate')

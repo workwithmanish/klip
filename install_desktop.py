@@ -35,12 +35,12 @@ def main():
         from PySide6 import QtCore, QtWidgets, QtNetwork
     except ImportError:
         parser.error('Run using the Klip virtual environment Python after installing requirements.txt.')
-    icon_dir = data/'icons/hicolor/scalable/apps'
+    icon_dir = data/'icons'
     icon_dir.mkdir(parents=True, exist_ok=True)
-    shutil.copyfile(source/'assets/klip.svg', icon_dir/'klip.svg')
+    shutil.copyfile(source/'assets/klip.png', icon_dir/'klip.png')
     command = desktop_quote(sys.executable)+' '+desktop_quote(script)
     applications.mkdir(parents=True, exist_ok=True)
-    target.write_text('[Desktop Entry]\nVersion=1.0\nType=Application\nName=Klip\nGenericName=Screenshot Tool\nComment=Capture and annotate your screen\nExec='+command+' --background\nIcon=klip\nTerminal=false\nCategories=Graphics;Utility;\nKeywords=screenshot;capture;annotation;clip;\nStartupNotify=false\nActions=Capture;Settings;\n\n[Desktop Action Capture]\nName=Capture area\nExec='+command+' --capture\n\n[Desktop Action Settings]\nName=Klip settings\nExec='+command+' --settings\n', encoding='utf-8')
+    target.write_text(('[Desktop Entry]\nVersion=1.0\nType=Application\nName=Klip\nGenericName=Screenshot Tool\nComment=Capture and annotate your screen\nExec='+command+' --background\nIcon={ICON_PATH}\nTerminal=false\nCategories=Graphics;Utility;\nKeywords=screenshot;capture;annotation;clip;\nStartupNotify=false\nActions=Capture;Settings;\n\n[Desktop Action Capture]\nName=Capture area\nExec='+command+' --capture\n\n[Desktop Action Settings]\nName=Klip settings\nExec='+command+' --settings\n').replace('{ICON_PATH}', str(icon_dir/'klip.png')), encoding='utf-8')
     if shutil.which('update-desktop-database'):
         subprocess.run(['update-desktop-database', str(applications)], check=False)
     print('Installed: '+str(target))

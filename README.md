@@ -1,5 +1,7 @@
 # Klip
 
+<img src="assets/klip.png" alt="Klip logo" width="96" />
+
 **Take a screenshot, draw on it, add text, and save or copy it.**
 Klip runs in the tray near your desktop clock. This project is in early development.
 

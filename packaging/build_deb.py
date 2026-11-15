@@ -52,11 +52,12 @@ def build(version, output):
     files = {}
     for name in MODULES:
         files['usr/share/klip/'+name] = ((ROOT/name).read_bytes(), 0o644)
-    for asset in sorted((ROOT/'assets').glob('*.svg')):
+    for asset in sorted((ROOT/'assets').iterdir()):
+        if asset.suffix not in ('.svg', '.png'):
+            continue
         files['usr/share/klip/assets/'+asset.name] = (asset.read_bytes(), 0o644)
     files['usr/bin/klip'] = (b'#!/bin/sh\nexec /usr/bin/python3 /usr/share/klip/klip.py "$@"\n', 0o755)
     files['usr/share/applications/klip.desktop'] = ((ROOT/'packaging/klip.desktop').read_bytes(), 0o644)
-    files['usr/share/icons/hicolor/scalable/apps/klip.svg'] = ((ROOT/'assets/klip.svg').read_bytes(), 0o644)
     for name in ('README.md', 'LICENSE', 'THIRD_PARTY.md'):
         files['usr/share/doc/klip/'+name] = ((ROOT/name).read_bytes(), 0o644)
     files['usr/share/doc/klip/copyright'] = ((ROOT/'LICENSE').read_bytes() + b'\nSee THIRD_PARTY.md for separately installed Qt/PySide6 dependencies.\n', 0o644)
