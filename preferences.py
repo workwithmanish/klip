@@ -293,10 +293,51 @@ class ControlPanel(QWidget):
         buttons.addWidget(save_keys)
         layout.addLayout(buttons)
         stack.addWidget(shortcuts)
-        about = QLabel('Klip\n\nCapture. Mark. Share.\n\nAn independent Linux screenshot tool.\n\nCurrent capture support: X11.\nAutomatic shortcut setup: XFCE.\n\nCaptures stay local unless you save, copy, or share them.\n\nA public project/support URL has not been configured yet.')
-        about.setWordWrap(True)
-        about.setMargin(24)
-        stack.addWidget(about)
+        about = QWidget()
+        about_layout = QVBoxLayout(about)
+        about_layout.setContentsMargins(16, 16, 16, 16)
+        about_layout.setSpacing(16)
+        heading = QLabel('Klip')
+        heading.setStyleSheet('font-size: 32px; font-weight: 700; color: #c4b6ff;')
+        about_layout.addWidget(heading)
+        tagline = QLabel('Capture. Mark. Share.  ·  Version 0.1.0 / Early development')
+        tagline.setWordWrap(True)
+        tagline.setStyleSheet('color: #b4c0da; padding-bottom: 8px;')
+        about_layout.addWidget(tagline)
+        description = QLabel('An independent Linux screenshot and annotation app. Capture an area, add drawings or text, and save or copy your image.')
+        description.setWordWrap(True)
+        about_layout.addWidget(description)
+        details = QLabel('Created by <b>Manish</b> · <b>@workwithmanish</b><br><br>'
+            'Tested desktop: Kali Linux · XFCE · X11<br>'
+            'Debian 13: automated package checks passed; desktop testing pending.<br>'
+            'Wayland capture is not supported yet.')
+        details.setWordWrap(True)
+        details.setStyleSheet('background: #222a3c; padding: 16px; border-radius: 8px;')
+        about_layout.addWidget(details)
+        links = QLabel(
+            '<a href="https://github.com/workwithmanish">Developer profile</a> &nbsp;·&nbsp; '
+            '<a href="https://github.com/workwithmanish/klip">Source code &amp; installation</a><br><br>'
+            '<a href="https://github.com/workwithmanish/klip/issues">Report a bug / suggest a feature</a> &nbsp;·&nbsp; '
+            '<a href="https://github.com/workwithmanish/klip/releases">Releases</a><br><br>'
+            '<a href="https://github.com/workwithmanish/klip/blob/main/LICENSE">MIT license</a> &nbsp;·&nbsp; '
+            '<a href="https://github.com/workwithmanish/klip/blob/main/THIRD_PARTY.md">Qt / PySide6 notices</a>')
+        links.setOpenExternalLinks(True)
+        links.setWordWrap(True)
+        links.setStyleSheet('padding: 8px 0;')
+        # Explicit link colors remain readable with both light and dark system palettes.
+        links.setText(links.text().replace('<a href=', '<a style="color: #baaaff;" href='))
+        about_layout.addWidget(links)
+        privacy = QLabel('Your captures stay local. Klip makes no network requests while capturing or editing. Clicking a link above opens your browser.\n\n© 2026 Manish and Klip contributors · Original code and artwork under MIT.')
+        privacy.setWordWrap(True)
+        privacy.setStyleSheet('color: #a9b6d0; padding-top: 8px;')
+        about_layout.addWidget(privacy)
+        about_layout.addStretch(1)
+        about_scroll = QScrollArea()
+        about_scroll.setWidgetResizable(True)
+        about_scroll.setFrameShape(QScrollArea.Shape.NoFrame)
+        about.setStyleSheet('background: #171b27;')
+        about_scroll.setWidget(about)
+        stack.addWidget(about_scroll)
         nav.setCurrentRow(0)
         footer = QHBoxLayout()
         self.status = QLabel('Ready')
