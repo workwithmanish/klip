@@ -762,8 +762,10 @@ class Controller:
         self.panel = None
         self.overlays = []
         self.editors = []
+        self.capture_pending = False
         self.portal_capture = PortalClient(app)
         self.portal_capture.image_ready.connect(self.portal_image)
+        self.portal_capture.stopped.connect(lambda:setattr(self,'capture_pending',False))
         self.portal_capture.error.connect(lambda message: QMessageBox.warning(None,'Klip · Desktop capture',message+'\n\nCheck that xdg-desktop-portal and your desktop backend are installed.'))
         self.portal_shortcuts = PortalClient(app)
         self.portal_shortcuts.activated.connect(lambda action: self.capture('ocr' if action == 'ocr' else 'edit'))
@@ -795,6 +797,9 @@ class Controller:
     def configure_portal_shortcuts(self,enabled):
         self.prefs.set('portal_shortcuts',enabled)
         if enabled:
+            if self.portal_shortcuts.process is not None:
+                self.portal_status('A desktop shortcut session is already active. Disable it first, then configure to change keys.')
+                return
             self.portal_status('Waiting for desktop shortcut permission…')
             self.portal_shortcuts.start('shortcuts')
         else:
@@ -823,13 +828,14 @@ class Controller:
         self.overlays.clear()
 
     def capture(self, mode='edit'):
-        if self.overlays or self.portal_capture.process is not None:
+        if self.overlays or self.capture_pending or self.portal_capture.process is not None:
             return
         self.capture_mode = 'ocr' if mode == 'ocr' else 'edit'
         if use_capture_portal():
             if self.panel is not None:
                 self.panel.hide()
             self.portal_timestamp = timestamp_label()
+            self.capture_pending = True
             # The desktop owns screenshot consent and interactive region selection.
             QTimer.singleShot(200,lambda:self.portal_capture.start('screenshot'))
             return

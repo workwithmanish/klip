@@ -15,7 +15,8 @@
     "--filesystem=xdg-download",
     "--env=QT_QPA_PLATFORM=wayland;xcb",
     "--env=TESSDATA_PREFIX=/app/share/tessdata",
-    "--talk-name=org.kde.StatusNotifierWatcher"
+    "--talk-name=org.kde.StatusNotifierWatcher",
+    "--env=QT_QPA_PLATFORMTHEME=xdgdesktopportal"
   ],
   "build-options": {
     "env": {
@@ -53,6 +54,9 @@
           "url": "https://github.com/DanBloomberg/leptonica/releases/download/1.87.0/leptonica-1.87.0.tar.gz",
           "sha256": "c73363397f96eb1295602bf44d708a994ad42046c791bf03ea0505d829bdb6a7"
         }
+      ],
+      "post-install": [
+        "install -Dm644 leptonica-license.txt /app/share/licenses/leptonica/LICENSE"
       ]
     },
     {
@@ -70,6 +74,9 @@
           "url": "https://codeload.github.com/tesseract-ocr/tesseract/tar.gz/refs/tags/5.5.4",
           "sha256": "a8dbf8b8c8ee427ff6ad1d99116502feaf59440af1adb893caf60a6576826cf4"
         }
+      ],
+      "post-install": [
+        "install -Dm644 LICENSE /app/share/licenses/tesseract/LICENSE"
       ]
     },
     {
@@ -77,7 +84,8 @@
       "buildsystem": "simple",
       "build-commands": [
         "install -Dm644 eng.traineddata /app/share/tessdata/eng.traineddata",
-        "install -Dm644 hin.traineddata /app/share/tessdata/hin.traineddata"
+        "install -Dm644 hin.traineddata /app/share/tessdata/hin.traineddata",
+        "install -Dm644 TESSDATA-LICENSE /app/share/licenses/tessdata/LICENSE"
       ],
       "sources": [
         {
@@ -89,6 +97,12 @@
           "type": "file",
           "url": "https://raw.githubusercontent.com/tesseract-ocr/tessdata_fast/87416418657359cb625c412a48b6e1d6d41c29bd/hin.traineddata",
           "sha256": "4c73ffc59d497c186b19d1e90f5d721d678ea6b2e277b719bee4e2af12271825"
+        },
+        {
+          "type": "file",
+          "url": "https://raw.githubusercontent.com/tesseract-ocr/tessdata_fast/87416418657359cb625c412a48b6e1d6d41c29bd/LICENSE",
+          "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+          "dest-filename": "TESSDATA-LICENSE"
         }
       ]
     },

@@ -21,3 +21,7 @@ as a separate local executable and is licensed under Apache-2.0. It is not
 vendored. Language data comes from separately installed distribution packages.
 See https://github.com/tesseract-ocr/tesseract/blob/main/LICENSE and the distro's
 installed copyright notices for the engine and trained language data.
+
+## Flatpak preview
+
+The Flatpak uses the Qt/PySide BaseApp and KDE runtime, and bundles dbus-next (MIT), Leptonica (BSD-style), Tesseract (Apache-2.0), and tessdata_fast English/Hindi data (Apache-2.0). Their upstream notices/licenses remain applicable. This differs from the Debian package, which uses distro-managed dependencies. Source URLs and hashes are pinned in the Flatpak manifest.

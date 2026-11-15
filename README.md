@@ -27,7 +27,7 @@ on Ubuntu, Mint, or Kali. Versions and available dependencies also matter.
 
 ## Who is Klip for right now?
 
-**Klip currently targets desktop Linux on X11.** Kali/XFCE/X11 is manually
+**Klip targets desktop Linux: native X11 capture plus experimental Wayland portal capture in 0.3.0.** Kali/XFCE/X11 is manually
 tested; Debian 13 package/editor/OCR checks pass. Everything else below is
 classified for clarity, not claimed as supported.
 
@@ -72,13 +72,13 @@ systems, vendor forks, experimental kernels and embedded products are open-ended
 
 | Lineage / ecosystem | Distributions / variants | Package or deployment tools | Klip status |
 | --- | --- | --- | --- |
-| **Debian** | Debian 13 | DEB · APT/dpkg | Automated package/editor/OCR checks pass; real desktop testing pending. X11 required. |
+| **Debian** | Debian 13 | DEB · APT/dpkg | Automated package/editor/OCR checks pass; real desktop testing pending. X11 tested path; Wayland portal preview unverified. |
 | Debian-derived / security | **Kali Linux Rolling** | DEB · APT/dpkg | **Main manually tested system: XFCE + X11**, including fresh package install. |
 | Debian-derived / desktop | LMDE, MX Linux, antiX, SparkyLinux, Q4OS | Generally DEB · APT/dpkg | Untested; base version, dependencies and session must be checked. |
 | Debian-derived / alternative init | Devuan | DEB · APT/dpkg | Untested; no systemd assumption is sufficient to establish support. |
 | **Ubuntu** (Debian-derived) | Ubuntu, Kubuntu, Xubuntu, Lubuntu, Ubuntu MATE | DEB · APT/dpkg | Untested; desktop/session and available PySide6 version vary. |
 | Ubuntu-derived | Linux Mint Ubuntu edition, Pop!_OS, Zorin OS, elementary OS, KDE neon | DEB · APT/dpkg | Untested. Debian ancestry does not guarantee package compatibility. |
-| **Fedora** | Fedora Workstation, Server, desktop Spins | RPM · DNF | No Klip RPM or Fedora runtime testing yet. **Reported Fedora 44 GNOME/Wayland cannot capture.** |
+| **Fedora** | Fedora Workstation, Server, desktop Spins | RPM · DNF | No RPM yet. **Use the 0.3.0 Flatpak preview for Fedora 44 GNOME/Wayland testing.** Real desktop verification pending. |
 | Fedora image-based variants | Silverblue, Kinoite, other Fedora Atomic Desktops | Image deployments; rpm-ostree/variant-specific tooling | Untested; ordinary DNF installation instructions do not apply universally. |
 | **RHEL ecosystem** | RHEL, CentOS Stream, Rocky Linux, AlmaLinux, Oracle Linux | RPM · DNF and platform-specific tooling | No Klip RPM; untested. Python/Qt availability varies by release. |
 | **SUSE ecosystem** | openSUSE Leap, Tumbleweed; SUSE Linux Enterprise | RPM · Zypper | No Klip RPM; untested. Fedora RPMs are not automatically compatible. |
@@ -114,8 +114,8 @@ Only the Kali and Debian rows above carry actual verification claims.
 | KDE Plasma | X11, where available | Untested; manual desktop shortcut setup. |
 | Cinnamon / MATE / LXQt / LXDE | X11 | Untested; manual desktop shortcut setup. |
 | Standalone window managers, e.g. i3/Openbox | X11 | Untested; tray availability and shortcut setup vary. |
-| **GNOME / KDE / XFCE / any desktop** | **Wayland** | **No screen capture or capture-to-OCR yet.** RPM, DEB or source installation cannot remove this limitation. |
-| Wayland compositors, e.g. Sway/Hyprland | Wayland | Unsupported capture; portal backend not implemented. |
+| **GNOME / KDE / XFCE / any desktop** | **Wayland** | **Experimental screenshot/OCR via the desktop portal in 0.3.0.** Requires a working Screenshot backend and permission. Not manually verified on GNOME/KDE yet. |
+| Wayland compositors, e.g. Sway/Hyprland | Wayland | Experimental portal path; depends on compositor backend support. Not tested. |
 | Remote desktop / nested sessions | X11 or Wayland | Untested; screenshot and shortcut permissions are session-dependent. |
 | Headless server / console / container without a desktop | No graphical session | No supported interactive capture workflow. |
 
@@ -144,8 +144,50 @@ Check your display session in a terminal:
 echo "$XDG_SESSION_TYPE"
 ```
 
-**`x11`** → continue. **`wayland`** → this version cannot capture your screen.
-If your login screen offers an X11 session, you can choose it before logging in.
+**`x11`** → native capture. **`wayland`** → use version 0.3.0 portal preview; your desktop will ask permission and handle selection. Earlier releases do not support Wayland capture.
+
+## Cross-distro preview: Flatpak (Fedora / GNOME / KDE)
+
+Version **0.3.0** adds a downloadable Flatpak preview for **x86_64** Linux.
+It bundles Python/Qt, Tesseract and English/Hindi OCR data, avoiding distro-specific
+Python dependency installation. It is not an RPM and is not listed on Flathub.
+
+Download `klip_0.3.0_x86_64.flatpak` from the new pre-release when available.
+With Flatpak installed on your distro:
+
+```bash
+flatpak remote-add --user --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+flatpak install --user ./klip_0.3.0_x86_64.flatpak
+flatpak run io.github.workwithmanish.klip
+```
+
+Fedora Workstation users without Flatpak can install it with `sudo dnf install flatpak`.
+Run the app as your normal desktop user, without sudo. Do not run the Flatpak and
+native version simultaneously while testing.
+
+**Wayland:** the desktop's Screenshot portal owns consent and selection. Its UI
+and region options may differ from Klip's X11 overlay. If the portal backend is
+missing or refuses a request, Klip reports the error; it does not bypass permissions.
+Flatpak uses this capture path on X11 too.
+
+**Shortcuts:** Settings → Shortcuts → Configure desktop portal shortcuts. Your
+desktop chooses keys and requests permission. Backend availability varies; if it
+fails, add a desktop keyboard shortcut for:
+
+```text
+flatpak run io.github.workwithmanish.klip --capture
+```
+
+Portal shortcuts require Klip to remain running. GNOME may not display the tray
+icon; the application menu opens the control panel when no tray is available.
+Flatpak preview login startup is set manually through your desktop's Startup
+Applications with `flatpak run io.github.workwithmanish.klip --background`.
+Save access is provided to Pictures/Downloads and native file-picker portals.
+
+**Testing status:** automated protocol/build tests are separate from real
+Fedora/GNOME and KDE desktop testing. Please test and report those results before
+assuming broad compatibility. Flatpak updates for these standalone bundles are
+manual: download and install a newer bundle. No automatic update repository yet.
 
 ## Install Klip: choose ONE method
 
@@ -157,7 +199,7 @@ launch Klip with `sudo`.
 | --- | --- | --- |
 | **A. Source installation** | Trying Klip today and getting updates | Yes |
 | **B. Local `.deb` package** | Installing an independent system application | Yes, build it first |
-| **C. Download a ready-made `.deb`** | Trying the older alpha | v0.1.0-alpha available; latest development version is 0.2.1 |
+| **C. Download a ready-made `.deb`** | Trying the older alpha | v0.1.0-alpha available; latest development version is 0.3.0 |
 
 Do not combine A and B. If you already installed a development/shared-folder
 version, read [migration instructions](docs/DEVELOPMENT.md#migrate-from-the-shared-folder-development-setup)
@@ -201,7 +243,7 @@ A **`.deb` is an installation package** used by Debian and related systems.
 This method installs Klip as a system application; it does not need a source
 folder or a Python virtual environment afterward.
 
-For the latest development version (0.2.1), build the package locally:
+For the latest development version (0.3.0), build the package locally:
 
 ```bash
 sudo apt update
@@ -209,7 +251,7 @@ sudo apt install -y git python3
 git clone https://github.com/workwithmanish/klip.git "$HOME/klip-build"
 cd "$HOME/klip-build"
 python3 packaging/build_deb.py
-sudo apt install ./dist/klip_0.2.1_all.deb
+sudo apt install ./dist/klip_0.3.0_all.deb
 ```
 
 Use a different unused folder name if `~/klip-build` already exists. APT installs
@@ -226,7 +268,7 @@ For a later update, quit Klip and repeat the build/install from your build check
 cd "$HOME/klip-build"
 git pull --ff-only
 python3 packaging/build_deb.py
-sudo apt install ./dist/klip_0.2.1_all.deb
+sudo apt install ./dist/klip_0.3.0_all.deb
 ```
 
 The version/filename will change for future releases; use the name printed by
@@ -243,7 +285,7 @@ sudo apt install ./klip_0.1.0_all.deb
 
 This older release does **not** contain the newer OCR, logo, loading screen or
 light-theme changes. Use A or B for the latest version. Do not downgrade an
-existing 0.2.1 installation to the older alpha.
+existing 0.3.0 installation to the older alpha.
 
 ## Use Klip: menu, shortcut, or terminal
 
@@ -357,7 +399,7 @@ Your saved screenshots are not deleted. User preferences are retained.
 
 Klip makes no network requests while capturing/editing. Captures stay local
 unless saved, copied, or shared. Pixelation is a visual effect, not guaranteed
-secure redaction. No true blur or Wayland capture yet.
+secure redaction. No true blur yet. Wayland capture is an experimental portal integration.
 
 [Developer/package details](docs/DEVELOPMENT.md) · [Contributing](CONTRIBUTING.md) ·
 [MIT license](LICENSE) · [Qt/PySide6 notices](THIRD_PARTY.md)

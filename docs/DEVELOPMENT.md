@@ -16,18 +16,18 @@ The package builder needs only Python's standard library. It bundles original
 Python source/SVG assets and declares distro Python/Qt dependencies. It does not
 vendor Qt or download/install dependencies during the build.
 
-The `all` in `klip_0.2.1_all.deb` means the package source is architecture-independent;
+The `all` in `klip_0.3.0_all.deb` means the package source is architecture-independent;
 native Qt packages must still be available for the target CPU and OS. Debian 13
 CI checks installation, offscreen tests and removal. Real tray, X11 capture,
 shortcuts and startup still require manual desktop checks (CONTRIBUTING.md).
 
 ## Install an experimental .deb
 
-The published v0.1.0-alpha is older than development version 0.2.1.
+The published v0.1.0-alpha is older than development version 0.3.0.
 For the latest code, build from a checkout, then:
 
 ```bash
-sudo apt install ./dist/klip_0.2.1_all.deb
+sudo apt install ./dist/klip_0.3.0_all.deb
 ```
 
 APT gets requirements from your configured repositories. Do not mix distro

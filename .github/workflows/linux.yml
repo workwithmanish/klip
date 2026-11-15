@@ -45,7 +45,10 @@ jobs:
           flatpak --user remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
       - name: Build sandboxed application
         run: |
-          flatpak-builder --user --disable-rofiles-fuse --install-deps-from=flathub --force-clean --repo=flatpak-repo flatpak-build packaging/io.github.workwithmanish.klip.json
+          if ! flatpak-builder --user --disable-rofiles-fuse --install-deps-from=flathub --force-clean --repo=flatpak-repo flatpak-build packaging/io.github.workwithmanish.klip.json > /tmp/klip-flatpak.log 2>&1; then
+            tail -n 8 /tmp/klip-flatpak.log | while IFS= read -r line; do printf '::error::%s\n' "$line"; done
+            exit 1
+          fi
           flatpak build --env=QT_QPA_PLATFORM=offscreen flatpak-build python3 -c "import sys; sys.path.insert(0,'/app/share/klip'); import klip, portals, ocr; from PySide6.QtWidgets import QApplication; from PySide6.QtGui import QImage; app=QApplication([]); editor=klip.Editor(QImage(640,480,QImage.Format.Format_RGB32)); print('Flatpak editor imports and creation passed')"
           flatpak build flatpak-build tesseract --list-langs
           mkdir -p dist

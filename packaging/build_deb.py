@@ -75,10 +75,10 @@ Recommends: xfconf
 Suggests: tesseract-ocr-hin
 Installed-Size: {sum(len(data) for data, _ in files.values())//1024+1}
 Homepage: https://github.com/workwithmanish/klip
-Description: Screenshot capture and annotation tool for X11 desktops
+Description: Screenshot capture and annotation tool for Linux desktops
  Select and resize capture regions, annotate images, and export captures.
  Includes configurable XFCE shortcuts and local-time timestamp watermarks.
- Wayland capture is not currently supported.
+ Wayland capture uses the desktop Screenshot portal (experimental).
 '''.encode()
     sums = ''.join(hashlib.md5(data).hexdigest()+'  '+name+'\n' for name, (data, _) in sorted(files.items())).encode()
     package = b'!<arch>\n'
