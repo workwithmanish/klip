@@ -11,21 +11,21 @@ jobs:
     container: debian:13
     steps:
       - name: Install build tools
-        run: apt-get update && apt-get install -y --no-install-recommends ca-certificates git python3 desktop-file-utils
+        run: apt-get update && apt-get install -y --no-install-recommends ca-certificates git python3 desktop-file-utils dbus-daemon
       - uses: actions/checkout@v4
       - name: Build and inspect package
         run: |
           python3 packaging/build_deb.py
-          dpkg-deb --info dist/klip_0.2.1_all.deb
-          dpkg-deb --contents dist/klip_0.2.1_all.deb
+          dpkg-deb --info dist/klip_0.3.0_all.deb
+          dpkg-deb --contents dist/klip_0.3.0_all.deb
           desktop-file-validate packaging/klip.desktop
       - name: Install package and test installed modules
         run: |
-          if ! apt-get install -y ./dist/klip_0.2.1_all.deb python3-pyside6.qttest fonts-dejavu-core tesseract-ocr-hin > /tmp/klip-install.log 2>&1; then
+          if ! apt-get install -y ./dist/klip_0.3.0_all.deb python3-pyside6.qttest fonts-dejavu-core tesseract-ocr-hin > /tmp/klip-install.log 2>&1; then
             grep -Ei 'error|unable|dpkg:|E:|klip' /tmp/klip-install.log | tail -n 8 | while IFS= read -r line; do printf '::error::%s\n' "$line"; done
             exit 1
           fi
-          QT_QPA_PLATFORM=offscreen KLIP_SOURCE=/usr/share/klip python3 -m unittest discover -s tests -v
+          QT_QPA_PLATFORM=offscreen KLIP_SOURCE=/usr/share/klip dbus-run-session -- python3 -m unittest discover -s tests -v
           QT_QPA_PLATFORM=offscreen /usr/bin/klip --help
           apt-get remove -y klip
           test ! -e /usr/bin/klip
@@ -34,3 +34,44 @@ jobs:
           name: klip-development-deb
           path: dist/*
           if-no-files-found: error
+  flatpak:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Flatpak build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y flatpak flatpak-builder
+          flatpak --user remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+      - name: Build sandboxed application
+        run: |
+          flatpak-builder --user --disable-rofiles-fuse --install-deps-from=flathub --force-clean --repo=flatpak-repo flatpak-build packaging/io.github.workwithmanish.klip.json
+          flatpak build --env=QT_QPA_PLATFORM=offscreen flatpak-build python3 -c "import sys; sys.path.insert(0,'/app/share/klip'); import klip, portals, ocr; from PySide6.QtWidgets import QApplication; from PySide6.QtGui import QImage; app=QApplication([]); editor=klip.Editor(QImage(640,480,QImage.Format.Format_RGB32)); print('Flatpak editor imports and creation passed')"
+          flatpak build flatpak-build tesseract --list-langs
+          mkdir -p dist
+          flatpak build-bundle flatpak-repo dist/klip_0.3.0_x86_64.flatpak io.github.workwithmanish.klip
+          cd dist
+          sha256sum *.flatpak > klip_0.3.0_x86_64.flatpak.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: klip-development-flatpak
+          path: dist/*
+          if-no-files-found: error
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [debian, flatpak]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: klip-development-*
+          merge-multiple: true
+          path: release-assets
+      - name: Publish pre-release with tested build artifacts
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: gh release create "$RELEASE_TAG" release-assets/* --prerelease --title "Klip $RELEASE_TAG" --notes-file packaging/RELEASE_NOTES.md

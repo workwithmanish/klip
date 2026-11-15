@@ -45,6 +45,8 @@ class Preferences:
 
 
 def launch_command():
+    if Path('/.flatpak-info').exists():
+        return 'flatpak run io.github.workwithmanish.klip --capture'
     return shlex.join([sys.executable, str(Path(__file__).absolute().with_name('klip.py')), '--capture'])
 
 
@@ -91,6 +93,8 @@ def normalize_binding(value):
 
 
 def register_capture(prefs, sequence):
+    if Path('/.flatpak-info').exists():
+        raise ValueError('Use Configure desktop portal shortcuts below, or bind the Flatpak capture command in your desktop settings.')
     if sys.platform != 'linux' or 'XFCE' not in os.environ.get('XDG_CURRENT_DESKTOP', '').upper() or not shutil.which('xfconf-query'):
         raise ValueError('Automatic registration currently supports XFCE only. Use the command below in your desktop keyboard settings.')
     def run(*args):
@@ -135,7 +139,7 @@ def register_capture(prefs, sequence):
 
 
 class ControlPanel(QWidget):
-    def __init__(self, prefs, changed, capture):
+    def __init__(self, prefs, changed, capture, portal_shortcuts=None):
         super().__init__()
         self.prefs = prefs
         self.changed = changed
@@ -222,7 +226,9 @@ class ControlPanel(QWidget):
         form.addRow(self.guides)
         self.startup = QCheckBox('Start Klip when I log in')
         self.startup.setChecked(autostart_path().exists() if sys.platform == 'linux' else False)
-        self.startup.setEnabled(sys.platform == 'linux')
+        self.startup.setEnabled(sys.platform == 'linux' and not Path('/.flatpak-info').exists())
+        if Path('/.flatpak-info').exists():
+            self.startup.setToolTip('For this Flatpak preview, use your desktop Startup Applications settings with flatpak run io.github.workwithmanish.klip --background.')
         form.addRow(self.startup)
         save = QPushButton('Save general settings')
         save.setFixedWidth(200)
@@ -250,6 +256,18 @@ class ControlPanel(QWidget):
         hint = QLabel('Click the field and press your keys. Existing XFCE assignments are preserved. Clear the field and apply to remove a shortcut created by Klip.')
         hint.setWordWrap(True)
         layout.addWidget(hint)
+        if portal_shortcuts is not None:
+            portal_row = QHBoxLayout()
+            portal_enable = QPushButton('Configure desktop portal shortcuts')
+            portal_enable.clicked.connect(lambda:portal_shortcuts(True))
+            portal_disable = QPushButton('Disable portal shortcuts')
+            portal_disable.clicked.connect(lambda:portal_shortcuts(False))
+            portal_row.addWidget(portal_enable)
+            portal_row.addWidget(portal_disable)
+            layout.addLayout(portal_row)
+            portal_note = QLabel('GNOME/KDE/Wayland: the desktop chooses the keys and requests permission. If unavailable, use your desktop keyboard settings. Klip must remain running for portal shortcuts.')
+            portal_note.setWordWrap(True)
+            layout.addWidget(portal_note)
         command = QLineEdit(launch_command())
         command.setReadOnly(True)
         from PySide6.QtGui import QFontDatabase
@@ -307,7 +325,7 @@ class ControlPanel(QWidget):
         logo.setPixmap(QIcon(str(Path(__file__).parent / 'assets' / 'klip.png')).pixmap(80, 80))
         label('Klip', 'font-size: 36px; font-weight: 600; color: #0b1c30;', 8)
         label('Capture. Mark. Share.', 'font-size: 15px; color: #64748b;', 12)
-        label('v0.2.1 · Alpha', 'font-size: 11px; color: #be0037;', 24)
+        label('v0.3.0 · Alpha', 'font-size: 11px; color: #be0037;', 24)
         label('Screenshot capture and annotation for Linux.', 'color: #64748b;', 28)
         label('Made by Manish', 'color: #0b1c30;', 6)
 
@@ -380,7 +398,7 @@ class ControlPanel(QWidget):
             folder = Path(self.folder.text()).expanduser()
             if not folder.is_absolute() or not folder.is_dir() or not os.access(folder, os.W_OK):
                 raise ValueError('Choose an existing writable absolute save folder.')
-            if sys.platform == 'linux':
+            if sys.platform == 'linux' and not Path('/.flatpak-info').exists():
                 set_autostart(self.startup.isChecked())
             for key, value in {'folder': str(folder), 'format': self.format.currentText(), 'width': self.width.value(), 'color': self.color_value, 'sound': self.sound.isChecked(), 'guides': self.guides.isChecked()}.items():
                 self.prefs.set(key, value)

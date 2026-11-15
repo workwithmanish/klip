@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.workwithmanish.klip</id>
+  <name>Klip</name>
+  <summary>Capture, annotate, and extract text from screenshots</summary>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>MIT</project_license>
+  <developer id="io.github.workwithmanish"><name>Manish</name></developer>
+  <description><p>A local screenshot editor with drawing tools, inline text, OCR and timestamp watermarks. X11 capture is available directly; Wayland capture uses your desktop screenshot portal and permission flow.</p></description>
+  <launchable type="desktop-id">io.github.workwithmanish.klip.desktop</launchable>
+  <url type="homepage">https://github.com/workwithmanish/klip</url>
+  <url type="bugtracker">https://github.com/workwithmanish/klip/issues</url>
+  <content_rating type="oars-1.1"/>
+  <releases><release version="0.3.0" date="2026-11-15" type="development"/></releases>
+</component>

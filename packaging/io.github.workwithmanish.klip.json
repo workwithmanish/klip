@@ -1,0 +1,125 @@
+{
+  "id": "io.github.workwithmanish.klip",
+  "runtime": "org.kde.Platform",
+  "runtime-version": "6.10",
+  "sdk": "org.kde.Sdk",
+  "base": "io.qt.PySide.BaseApp",
+  "base-version": "6.10",
+  "command": "klip",
+  "finish-args": [
+    "--share=ipc",
+    "--socket=wayland",
+    "--socket=fallback-x11",
+    "--device=dri",
+    "--filesystem=xdg-pictures",
+    "--filesystem=xdg-download",
+    "--env=QT_QPA_PLATFORM=wayland;xcb",
+    "--env=TESSDATA_PREFIX=/app/share/tessdata",
+    "--talk-name=org.kde.StatusNotifierWatcher"
+  ],
+  "build-options": {
+    "env": {
+      "BASEAPP_REMOVE_WEBENGINE": "1",
+      "BASEAPP_DISABLE_NUMPY": "1"
+    }
+  },
+  "cleanup-commands": [
+    "/app/cleanup-BaseApp.sh"
+  ],
+  "modules": [
+    {
+      "name": "dbus-next",
+      "buildsystem": "simple",
+      "build-commands": [
+        "pip3 install --no-deps --no-index --prefix=/app dbus_next-0.2.3-py3-none-any.whl"
+      ],
+      "sources": [
+        {
+          "type": "file",
+          "url": "https://files.pythonhosted.org/packages/d2/fc/c0a3f4c4eaa5a22fbef91713474666e13d0ea2a69c84532579490a9f2cc8/dbus_next-0.2.3-py3-none-any.whl",
+          "sha256": "58948f9aff9db08316734c0be2a120f6dc502124d9642f55e90ac82ffb16a18b"
+        }
+      ]
+    },
+    {
+      "name": "leptonica",
+      "buildsystem": "cmake-ninja",
+      "config-opts": [
+        "-DBUILD_PROG=OFF"
+      ],
+      "sources": [
+        {
+          "type": "archive",
+          "url": "https://github.com/DanBloomberg/leptonica/releases/download/1.87.0/leptonica-1.87.0.tar.gz",
+          "sha256": "c73363397f96eb1295602bf44d708a994ad42046c791bf03ea0505d829bdb6a7"
+        }
+      ]
+    },
+    {
+      "name": "tesseract",
+      "buildsystem": "cmake-ninja",
+      "config-opts": [
+        "-DBUILD_TRAINING_TOOLS=OFF",
+        "-DBUILD_TESTS=OFF",
+        "-DDISABLE_ARCHIVE=ON",
+        "-DDISABLE_CURL=ON"
+      ],
+      "sources": [
+        {
+          "type": "archive",
+          "url": "https://codeload.github.com/tesseract-ocr/tesseract/tar.gz/refs/tags/5.5.4",
+          "sha256": "a8dbf8b8c8ee427ff6ad1d99116502feaf59440af1adb893caf60a6576826cf4"
+        }
+      ]
+    },
+    {
+      "name": "ocr-language-data",
+      "buildsystem": "simple",
+      "build-commands": [
+        "install -Dm644 eng.traineddata /app/share/tessdata/eng.traineddata",
+        "install -Dm644 hin.traineddata /app/share/tessdata/hin.traineddata"
+      ],
+      "sources": [
+        {
+          "type": "file",
+          "url": "https://raw.githubusercontent.com/tesseract-ocr/tessdata_fast/87416418657359cb625c412a48b6e1d6d41c29bd/eng.traineddata",
+          "sha256": "7d4322bd2a7749724879683fc3912cb542f19906c83bcc1a52132556427170b2"
+        },
+        {
+          "type": "file",
+          "url": "https://raw.githubusercontent.com/tesseract-ocr/tessdata_fast/87416418657359cb625c412a48b6e1d6d41c29bd/hin.traineddata",
+          "sha256": "4c73ffc59d497c186b19d1e90f5d721d678ea6b2e277b719bee4e2af12271825"
+        }
+      ]
+    },
+    {
+      "name": "klip",
+      "buildsystem": "simple",
+      "build-commands": [
+        "install -d /app/share/klip/assets /app/bin /app/share/applications /app/share/icons/hicolor/256x256/apps",
+        "install -m644 *.py /app/share/klip/",
+        "install -m644 assets/* /app/share/klip/assets/",
+        "install -Dm755 packaging/flatpak-launcher /app/bin/klip",
+        "install -Dm644 packaging/flatpak.desktop /app/share/applications/io.github.workwithmanish.klip.desktop",
+        "install -Dm644 packaging/io.github.workwithmanish.klip.metainfo.xml /app/share/metainfo/io.github.workwithmanish.klip.metainfo.xml",
+        "python3 packaging/export_icon.py assets/klip.png /app/share/icons/hicolor/256x256/apps/io.github.workwithmanish.klip.png",
+        "install -Dm644 LICENSE /app/share/licenses/klip/LICENSE",
+        "install -Dm644 THIRD_PARTY.md /app/share/licenses/klip/THIRD_PARTY.md"
+      ],
+      "sources": [
+        {
+          "type": "dir",
+          "path": "..",
+          "skip": [
+            ".git",
+            "dist",
+            "build",
+            "__pycache__",
+            ".venv",
+            "logo.png"
+          ]
+        }
+      ]
+    }
+  ]
+}

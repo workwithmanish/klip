@@ -12,6 +12,7 @@ from watermark import timestamp_label, paint_watermark
 from ui_spacing import polish_inputs
 from ocr import show_ocr
 from theme import stylesheet
+from portals import PortalClient, use_capture_portal
 from geometry_tools import handles, hit_handle, paint_handles, transform_rect, cursor_for
 
 from PySide6.QtCore import Qt, QRect, QPoint, QTimer, Signal, QLockFile, QDir, QSize
@@ -761,6 +762,15 @@ class Controller:
         self.panel = None
         self.overlays = []
         self.editors = []
+        self.portal_capture = PortalClient(app)
+        self.portal_capture.image_ready.connect(self.portal_image)
+        self.portal_capture.error.connect(lambda message: QMessageBox.warning(None,'Klip · Desktop capture',message+'\n\nCheck that xdg-desktop-portal and your desktop backend are installed.'))
+        self.portal_shortcuts = PortalClient(app)
+        self.portal_shortcuts.activated.connect(lambda action: self.capture('ocr' if action == 'ocr' else 'edit'))
+        self.portal_shortcuts.shortcut_ready.connect(lambda: self.portal_status('Desktop shortcuts enabled.'))
+        self.portal_shortcuts.error.connect(lambda message: self.portal_status('Shortcut portal: '+message+' Use desktop keyboard settings with the capture command below if unavailable.'))
+        app.aboutToQuit.connect(self.portal_capture.stop)
+        app.aboutToQuit.connect(self.portal_shortcuts.stop)
         self.icon = QIcon(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'assets', 'klip.png'))
         app.setWindowIcon(self.icon)
         self.tray = QSystemTrayIcon(self.icon)
@@ -775,10 +785,29 @@ class Controller:
         self.menu = menu
         self.tray.activated.connect(lambda reason: self.capture() if reason == QSystemTrayIcon.ActivationReason.Trigger else None)
         self.tray.show()
+        if self.prefs.get('portal_shortcuts',False) in (True,'true','1'):
+            QTimer.singleShot(500,lambda:self.configure_portal_shortcuts(True))
+
+    def portal_status(self,message):
+        if self.panel is not None:
+            self.panel.status.setText(message)
+
+    def configure_portal_shortcuts(self,enabled):
+        self.prefs.set('portal_shortcuts',enabled)
+        if enabled:
+            self.portal_status('Waiting for desktop shortcut permission…')
+            self.portal_shortcuts.start('shortcuts')
+        else:
+            self.portal_shortcuts.stop()
+            self.portal_status('Desktop shortcut session disabled.')
+
+    def portal_image(self,image):
+        image.setText('klip-timestamp',self.portal_timestamp)
+        self.capture_finished(image)
 
     def show_settings(self):
         if self.panel is None:
-            self.panel = ControlPanel(self.prefs, self.settings_changed, self.capture)
+            self.panel = ControlPanel(self.prefs, self.settings_changed, self.capture, self.configure_portal_shortcuts)
         self.panel.show()
         self.panel.raise_()
         self.panel.activateWindow()
@@ -794,11 +823,15 @@ class Controller:
         self.overlays.clear()
 
     def capture(self, mode='edit'):
-        if self.overlays:
+        if self.overlays or self.portal_capture.process is not None:
             return
         self.capture_mode = 'ocr' if mode == 'ocr' else 'edit'
-        if os.environ.get('XDG_SESSION_TYPE') == 'wayland':
-            QMessageBox.information(None, 'Klip · X11 required', 'This first version supports X11 capture. Log into an X11 desktop session to capture. Wayland portal support is planned.')
+        if use_capture_portal():
+            if self.panel is not None:
+                self.panel.hide()
+            self.portal_timestamp = timestamp_label()
+            # The desktop owns screenshot consent and interactive region selection.
+            QTimer.singleShot(200,lambda:self.portal_capture.start('screenshot'))
             return
         for screen in self.app.screens():
             overlay = Selection(screen, self.prefs.get('guides'))
@@ -844,6 +877,7 @@ def main():
     args = parser.parse_args()
     app = QApplication(sys.argv)
     app.setApplicationName('Klip')
+    app.setDesktopFileName('io.github.workwithmanish.klip')
     app.setQuitOnLastWindowClosed(False)
     app.setStyle('Fusion')
     app.setStyleSheet(stylesheet())

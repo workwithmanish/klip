@@ -1,0 +1,21 @@
+[Desktop Entry]
+Type=Application
+Name=Klip
+Comment=Capture, annotate, and extract text from screenshots
+Exec=klip --background
+Icon=io.github.workwithmanish.klip
+Terminal=false
+Categories=Graphics;Utility;
+Actions=Capture;OCR;Settings;
+
+[Desktop Action Capture]
+Name=Capture area
+Exec=klip --capture
+
+[Desktop Action OCR]
+Name=Capture text (OCR)
+Exec=klip --ocr
+
+[Desktop Action Settings]
+Name=Settings
+Exec=klip --settings

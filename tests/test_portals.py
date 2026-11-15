@@ -1,0 +1,63 @@
+import os
+os.environ.setdefault('QT_QPA_PLATFORM','offscreen')
+import sys
+from pathlib import Path
+import tempfile
+import unittest
+from unittest.mock import patch
+sys.path.insert(0,os.environ.get('KLIP_SOURCE',str(Path(__file__).resolve().parents[1])))
+from PySide6.QtCore import QUrl
+from PySide6.QtGui import QImage,QColor
+from portals import image_from_uri,use_capture_portal
+
+
+class PortalImageTests(unittest.TestCase):
+    def test_local_uri_and_reject_remote(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path=Path(folder)/'screen with spaces.png'
+            image=QImage(80,40,QImage.Format.Format_RGB32);image.fill(QColor('red'));image.save(str(path))
+            self.assertEqual(image_from_uri(QUrl.fromLocalFile(str(path)).toString()).size(),image.size())
+        for uri in ('https://example.com/screen.png','file://remotehost/screen.png','not-a-uri'):
+            with self.assertRaises(ValueError):image_from_uri(uri)
+
+    def test_wayland_uses_portal(self):
+        with patch.dict(os.environ,{'XDG_SESSION_TYPE':'wayland'}):
+            self.assertTrue(use_capture_portal())
+
+
+@unittest.skipUnless(os.environ.get('DBUS_SESSION_BUS_ADDRESS'),'Requires a temporary session bus')
+class PortalProtocolTests(unittest.IsolatedAsyncioTestCase):
+    async def test_real_dbus_request_response(self):
+        import asyncio
+        from dbus_next.aio import MessageBus
+        from dbus_next.service import ServiceInterface,method,signal
+        from dbus_next import Variant
+        import portal_helper
+        class Request(ServiceInterface):
+            def __init__(self):super().__init__('org.freedesktop.portal.Request')
+            @signal()
+            def Response(self,code:'u',data:'a{sv}')->'ua{sv}':return [code,data]
+        request=Request()
+        request_path='/org/freedesktop/portal/desktop/request/test/klip_mock'
+        class Registry(ServiceInterface):
+            def __init__(self):super().__init__('org.freedesktop.host.portal.Registry')
+            @method()
+            def Register(self,app_id:'s',options:'a{sv}'):
+                if app_id!='io.github.workwithmanish.klip':raise ValueError('Incorrect app identity')
+        class Screenshot(ServiceInterface):
+            def __init__(self):super().__init__('org.freedesktop.portal.Screenshot')
+            @method()
+            def Screenshot(self,parent:'s',options:'a{sv}')->'o':
+                if not options['interactive'].value:raise ValueError('Must request interactive capture')
+                asyncio.get_running_loop().call_later(.05,lambda:request.Response(0,{'uri':Variant('s','file:///tmp/test.png')}))
+                return request_path
+        bus=await MessageBus().connect()
+        await bus.request_name(portal_helper.SERVICE)
+        bus.export(portal_helper.PATH,Registry());bus.export(portal_helper.PATH,Screenshot())
+        bus.export(request_path,request)
+        emitted=[]
+        try:
+            with patch.object(portal_helper,'emit',side_effect=lambda **data:emitted.append(data)):
+                await asyncio.wait_for(portal_helper.run('screenshot'),5)
+            self.assertEqual(emitted,[{'event':'screenshot','uri':'file:///tmp/test.png'}])
+        finally:bus.disconnect()

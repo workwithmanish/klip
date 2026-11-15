@@ -22,9 +22,10 @@ def main():
         parser.error('Run this installer inside your Linux desktop session.')
     data = Path(os.environ.get('XDG_DATA_HOME', str(Path.home()/'.local/share')))
     applications = data/'applications'
-    target = applications/'klip.desktop'
+    target = applications/'io.github.workwithmanish.klip.desktop'
     if args.remove:
         target.unlink(missing_ok=True)
+        (applications/'klip.desktop').unlink(missing_ok=True)
         print('Klip menu launcher removed. Project and settings were preserved.')
         return
     source = Path(__file__).absolute().parent
@@ -40,6 +41,7 @@ def main():
     shutil.copyfile(source/'assets/klip.png', icon_dir/'klip.png')
     command = desktop_quote(sys.executable)+' '+desktop_quote(script)
     applications.mkdir(parents=True, exist_ok=True)
+    (applications/'klip.desktop').unlink(missing_ok=True)
     target.write_text(('[Desktop Entry]\nVersion=1.0\nType=Application\nName=Klip\nGenericName=Screenshot Tool\nComment=Capture and annotate your screen\nExec='+command+' --background\nIcon={ICON_PATH}\nTerminal=false\nCategories=Graphics;Utility;\nKeywords=screenshot;capture;annotation;clip;\nStartupNotify=false\nActions=Capture;Settings;\n\n[Desktop Action Capture]\nName=Capture area\nExec='+command+' --capture\n\n[Desktop Action Settings]\nName=Klip settings\nExec='+command+' --settings\n').replace('{ICON_PATH}', str(icon_dir/'klip.png')), encoding='utf-8')
     if shutil.which('update-desktop-database'):
         subprocess.run(['update-desktop-database', str(applications)], check=False)
