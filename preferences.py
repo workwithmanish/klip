@@ -294,48 +294,47 @@ class ControlPanel(QWidget):
         layout.addLayout(buttons)
         stack.addWidget(shortcuts)
         about = QWidget()
+        about.setStyleSheet('background: #171b27;')
         about_layout = QVBoxLayout(about)
-        about_layout.setContentsMargins(16, 16, 16, 16)
-        about_layout.setSpacing(16)
-        heading = QLabel('Klip')
-        heading.setStyleSheet('font-size: 32px; font-weight: 700; color: #c4b6ff;')
-        about_layout.addWidget(heading)
-        tagline = QLabel('Capture. Mark. Share.  ·  Version 0.2.0 / Early development')
-        tagline.setWordWrap(True)
-        tagline.setStyleSheet('color: #b4c0da; padding-bottom: 8px;')
-        about_layout.addWidget(tagline)
-        description = QLabel('An independent Linux screenshot and annotation app. Capture an area, add drawings or text, and save or copy your image.')
-        description.setWordWrap(True)
-        about_layout.addWidget(description)
-        details = QLabel('Created by <b>Manish</b> · <b>@workwithmanish</b><br><br>'
-            'Tested desktop: Kali Linux · XFCE · X11<br>'
-            'Debian 13: automated package checks passed; desktop testing pending.<br>'
-            'Wayland capture is not supported yet.')
-        details.setWordWrap(True)
-        details.setStyleSheet('background: #222a3c; padding: 16px; border-radius: 8px;')
-        about_layout.addWidget(details)
-        links = QLabel(
-            '<a href="https://github.com/workwithmanish">Developer profile</a> &nbsp;·&nbsp; '
-            '<a href="https://github.com/workwithmanish/klip">Source code &amp; installation</a><br><br>'
-            '<a href="https://github.com/workwithmanish/klip/issues">Report a bug / suggest a feature</a> &nbsp;·&nbsp; '
-            '<a href="https://github.com/workwithmanish/klip/releases">Releases</a><br><br>'
-            '<a href="https://github.com/workwithmanish/klip/blob/main/LICENSE">MIT license</a> &nbsp;·&nbsp; '
-            '<a href="https://github.com/workwithmanish/klip/blob/main/THIRD_PARTY.md">Qt / PySide6 notices</a>')
-        links.setOpenExternalLinks(True)
-        links.setWordWrap(True)
-        links.setStyleSheet('padding: 8px 0;')
-        # Explicit link colors remain readable with both light and dark system palettes.
-        links.setText(links.text().replace('<a href=', '<a style="color: #baaaff;" href='))
-        about_layout.addWidget(links)
-        privacy = QLabel('Your captures stay local. Klip makes no network requests while capturing or editing. Clicking a link above opens your browser.\n\n© 2026 Manish and Klip contributors · Original code and artwork under MIT.')
-        privacy.setWordWrap(True)
-        privacy.setStyleSheet('color: #a9b6d0; padding-top: 8px;')
-        about_layout.addWidget(privacy)
+        about_layout.setContentsMargins(28, 24, 28, 20)
+        about_layout.setSpacing(0)
         about_layout.addStretch(1)
+
+        def label(text, style='', gap=12):
+            item = QLabel(text)
+            item.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            item.setWordWrap(True)
+            item.setStyleSheet(style)
+            about_layout.addWidget(item)
+            about_layout.addSpacing(gap)
+            return item
+
+        logo = label('', gap=16)
+        logo.setPixmap(QIcon(str(Path(__file__).parent / 'assets' / 'klip.svg')).pixmap(64, 64))
+        label('Klip', 'font-size: 36px; font-weight: 600; color: #f0edff;', 8)
+        label('Capture. Mark. Share.', 'font-size: 15px; color: #b6bfd3;', 12)
+        label('v0.2.0 · Alpha', 'font-size: 11px; color: #a99bdf;', 24)
+        label('Screenshot capture and annotation for Linux.', 'color: #a9b3c8;', 28)
+        label('Made by Manish', 'color: #e2e6f1;', 6)
+
+        def linked(text, gap=12, muted=False):
+            color = '#929db5' if muted else '#baaaff'
+            item = label(text.replace('<a href=', '<a style="color: '+color+'; text-decoration: none;" href='), '', gap)
+            item.setOpenExternalLinks(True)
+            return item
+
+        linked('<a href="https://github.com/workwithmanish">@workwithmanish</a>', 28)
+        linked('<a href="https://github.com/workwithmanish/klip">GitHub</a> &nbsp;&nbsp; · &nbsp;&nbsp; '
+               '<a href="https://github.com/workwithmanish/klip/issues">Report an issue</a> &nbsp;&nbsp; · &nbsp;&nbsp; '
+               '<a href="https://github.com/workwithmanish/klip/releases">Releases</a>', 28)
+        label('Local capture. Offline OCR.', 'font-size: 12px; color: #929db5;', 0)
+        about_layout.addStretch(2)
+        linked('© 2026 Manish &nbsp; · &nbsp; '
+               '<a href="https://github.com/workwithmanish/klip/blob/main/LICENSE">MIT License</a> &nbsp; · &nbsp; '
+               '<a href="https://github.com/workwithmanish/klip/blob/main/THIRD_PARTY.md">Third-party notices</a>', 0, True)
         about_scroll = QScrollArea()
         about_scroll.setWidgetResizable(True)
-        about_scroll.setFrameShape(QScrollArea.Shape.NoFrame)
-        about.setStyleSheet('background: #171b27;')
+        about_scroll.setStyleSheet('QScrollArea { border: none; background: #171b27; }')
         about_scroll.setWidget(about)
         stack.addWidget(about_scroll)
         nav.setCurrentRow(0)
