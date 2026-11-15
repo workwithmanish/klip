@@ -5,6 +5,17 @@
 **Take a screenshot, draw on it, add text, and save or copy it.**
 Klip runs in the tray near your desktop clock. This project is in early development.
 
+**Current release: [v0.3.0-alpha](https://github.com/workwithmanish/klip/releases/tag/v0.3.0-alpha).**
+
+| Want to install now? | Download |
+| --- | --- |
+| Kali / Debian 13 | `klip_0.3.0_all.deb` |
+| Fedora or another Flatpak-capable x86_64 Linux desktop | `klip_0.3.0_x86_64.flatpak` — experimental desktop-portal preview |
+
+Flatpak is cross-distro: it can also be tested on Kali. It is not Fedora-only.
+Choose one installation method and quit any old instance before switching.
+[Verified tests and remaining desktop checks](docs/TESTING.md).
+
 ## Linux, Debian, Ubuntu, Kali… what is the difference?
 
 Windows and macOS are operating systems. **Linux** is a kernel—the core of an
@@ -293,7 +304,7 @@ for history but omit newer features.
 | How | What to do |
 | --- | --- |
 | **Application menu** | Search Klip, open it, then use its tray icon → Capture area. |
-| **Keyboard shortcut** | In Klip Settings → Shortcuts, record keys and click Apply capture shortcut. Automatic setup supports XFCE. |
+| **Keyboard shortcut** | XFCE native install: record/apply keys. GNOME/KDE/Flatpak: configure desktop portal shortcuts, with manual desktop-keyboard fallback. |
 | **Terminal** | Use the command below for your installation method. Useful for seeing errors. |
 
 **Source installation (A):**
@@ -308,18 +319,27 @@ for history but omit newer features.
 klip --capture
 ```
 
+**Flatpak:**
+
+```bash
+flatpak run io.github.workwithmanish.klip --capture
+```
+
 Replace `--capture` with `--settings` to open the control panel. Once started
 from the menu, Klip does not need an open terminal. Enable **Settings → General →
-Start Klip when I log in → Save general settings** for automatic startup.
+Start Klip when I log in → Save general settings** for native/source automatic startup.
+For Flatpak, use your desktop Startup Applications settings with
+`flatpak run io.github.workwithmanish.klip --background` instead.
 
-On desktops other than XFCE, global shortcuts must be configured manually in
-the desktop's keyboard settings using the appropriate capture command above.
+On desktops other than XFCE, first try **Configure desktop portal shortcuts**.
+If the backend does not support it, assign the capture command above manually
+in your desktop's keyboard settings. Portal shortcuts require Klip to stay running.
 
 ## Your first screenshot
 
 ### Extract text from a screenshot (OCR)
 
-In the current development version, choose **tray → Capture text (OCR)** and
+In v0.3.0-alpha, choose **tray → Capture text (OCR)** and
 select an area. Or click **Extract text (OCR)** in the image editor. Recognition
 runs locally; the editor timestamp watermark is excluded.
 
@@ -329,7 +349,9 @@ you can cancel. Edit the result, **Copy text**, or **Save .txt**. Retry replaces
 a successful result. OCR can make mistakes, especially
 in punctuation or code—review text before using it.
 
-The `.deb` installs English OCR dependencies. Source users install them once:
+The Flatpak includes English and Hindi OCR data; no host Tesseract install is
+needed. The `.deb` installs English OCR dependencies. Source users on Kali/Debian
+install them once:
 
 ```bash
 sudo apt install tesseract-ocr tesseract-ocr-eng
@@ -347,9 +369,11 @@ or cloud account are needed. A temporary local PNG is removed after processing.
 
 ### Capture and annotate
 
-1. Tray icon → **Capture area**.
-2. Drag to select an area. Move it or resize it using the edge/corner handles.
-3. Click **Capture** (or press Enter). **Esc** cancels.
+1. Tray icon or control panel → **Capture area**.
+2. Native X11: drag, move and resize using handles. Wayland/Flatpak: allow the
+   desktop screenshot request and use its available capture/selection options.
+3. Native X11: click **Capture** or press Enter; **Esc** cancels. In a portal
+   dialog, use the desktop's own confirm/cancel controls.
 4. Choose a toolbar tool; hover an icon to see its name.
 5. Click **Save** or **Copy** to paste into another app.
 
@@ -370,17 +394,30 @@ in the tray; choose **Quit Klip** to exit completely.
 
 ## Common questions
 
-- **Nothing opens after clicking Klip?** Check the tray near the clock; this is expected.
+- **Nothing opens after clicking Klip?** Check the tray. GNOME may have no tray;
+  open Settings using `flatpak run io.github.workwithmanish.klip --settings`
+  (Flatpak) or `klip --settings` (native package).
 - **Menu entry missing?** For A, rerun `install_desktop.py`; for B, check that APT finished successfully.
 - **Selection seems stuck?** Click Capture or press Enter. Esc cancels.
 - **Shortcut does nothing?** Click Apply, check for conflicts, and give your Linux desktop keyboard focus.
 - **Password is invisible while typing?** This is normal for `sudo`.
 - **Install failed?** Stop and [report the exact error](https://github.com/workwithmanish/klip/issues), with your distro, desktop, and X11/Wayland result.
+- **Portal capture fails?** Check your distro's `xdg-desktop-portal` and matching
+  GNOME/KDE/GTK/compositor backend. Capture requires desktop permission; Klip
+  cannot bypass it. Include the exact error in a bug report.
+
+## Update a downloaded package
+
+Quit Klip first. Download the newer asset from [Releases](https://github.com/workwithmanish/klip/releases).
+Install the new `.deb` with APT or new `.flatpak` with `flatpak install --user`.
+Use the actual downloaded filename; reopening an old file does not update Klip.
+These standalone downloads do not provide automatic updates or a Klip APT/Flatpak
+repository. Source users use the Git update instructions above.
 
 ## Uninstall
 
 First disable login startup, clear/apply Klip's capture shortcut in Settings,
-and quit Klip from the tray.
+disable any portal shortcut session, and quit Klip.
 
 **A. Source:** remove the menu launcher, then delete the `klip` folder in your file manager:
 
@@ -394,6 +431,14 @@ and quit Klip from the tray.
 sudo apt remove klip
 ```
 
+**Flatpak:**
+
+```bash
+flatpak uninstall --user io.github.workwithmanish.klip
+```
+
+Remove any manually configured Flatpak startup/keyboard entries in your desktop settings.
+
 Your saved screenshots are not deleted. User preferences are retained.
 
 ## More information
@@ -403,4 +448,5 @@ unless saved, copied, or shared. Pixelation is a visual effect, not guaranteed
 secure redaction. No true blur yet. Wayland capture is an experimental portal integration.
 
 [Developer/package details](docs/DEVELOPMENT.md) · [Contributing](CONTRIBUTING.md) ·
+[Testing status](docs/TESTING.md) · [Changelog](CHANGELOG.md) ·
 [MIT license](LICENSE) · [Qt/PySide6 notices](THIRD_PARTY.md)

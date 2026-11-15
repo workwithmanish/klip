@@ -1,4 +1,7 @@
-Linux compatibility preview: X11 capture plus experimental desktop-portal capture
+# Klip v0.3.0-alpha
+
+[Published release](https://github.com/workwithmanish/klip/releases/tag/v0.3.0-alpha).
+Installer/app version: 0.3.0. Linux compatibility preview: X11 capture plus experimental desktop-portal capture
 on Wayland, with a cross-distribution Flatpak build.
 
 ## Download and install
@@ -42,3 +45,9 @@ desktop's Startup Applications using `flatpak run io.github.workwithmanish.klip 
 The Flatpak is a downloadable preview bundle, not a Flathub listing or RPM.
 
 Report your distro/version, desktop, session type and package method with bugs.
+
+The Flatpak is cross-distro and may also be tested on Kali; it is not Fedora-only.
+Quit any other installed Klip instance first. Download/install newer bundles manually;
+there is no automatic Klip update repository yet. Both assets include SHA-256 files;
+run `sha256sum -c <downloaded-filename>.sha256` in their download folder to verify.
+For the current evidence and pending checks, see [Testing status](https://github.com/workwithmanish/klip/blob/main/docs/TESTING.md).

@@ -1,6 +1,9 @@
 # Changelog
 
-## 0.3.0 — compatibility preview
+## 0.3.0-alpha — released 2026-11-15
+
+[Download release](https://github.com/workwithmanish/klip/releases/tag/v0.3.0-alpha).
+Installer/app version: `0.3.0`. Wayland remains experimental; see [testing status](docs/TESTING.md).
 
 - Experimental permission-based Screenshot portal capture on Wayland and in Flatpak.
 - Desktop portal capture/OCR shortcuts with manual keyboard-settings fallback.

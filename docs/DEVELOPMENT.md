@@ -5,15 +5,21 @@ experimental Debian packages, and migration from the original shared-folder setu
 
 ## Build and test
 
-Python 3.10+ and PySide6 6.8+ are required.
+Python 3.10+, PySide6 6.8+ and dbus-next 0.2.3 are required.
+OCR uses the separate Tesseract executable and language data.
 
 ```bash
 python -m unittest discover -s tests
 python3 packaging/build_deb.py
 ```
 
+On Linux, run tests under `dbus-run-session -- python3 -m unittest discover -s tests -v`
+to include the mock portal protocol test. Real Tesseract recognition is tested
+when Tesseract/English data are installed. Install your distro's QtTest bindings
+for system-Python tests. Windows checks skip the Linux bus/engine tests when unavailable.
+
 The package builder needs only Python's standard library. It bundles original
-Python source/SVG assets and declares distro Python/Qt dependencies. It does not
+Python source/PNG/SVG assets and declares distro Python/Qt/OCR/portal dependencies. It does not
 vendor Qt or download/install dependencies during the build.
 
 The `all` in `klip_0.3.0_all.deb` means the package source is architecture-independent;
@@ -23,8 +29,8 @@ shortcuts and startup still require manual desktop checks (CONTRIBUTING.md).
 
 ## Install an experimental .deb
 
-The published v0.1.0-alpha is older than development version 0.3.0.
-For the latest code, build from a checkout, then:
+The current release is [v0.3.0-alpha](https://github.com/workwithmanish/klip/releases/tag/v0.3.0-alpha).
+Its `.deb` can be downloaded directly; developers can build from a checkout, then:
 
 ```bash
 sudo apt install ./dist/klip_0.3.0_all.deb
@@ -65,7 +71,8 @@ should be reviewed with `git status` before pulling; do not discard local change
 ## Command-line interface
 
 Installed package: `klip --capture`, `klip --settings`, `klip --background`,
-`klip --open image.png`. Source setup: use the selected Python and `klip.py` path.
+`klip --ocr`, `klip --open image.png`. Source setup: use the selected Python and `klip.py` path.
+Flatpak: prefix arguments with `flatpak run io.github.workwithmanish.klip`.
 
 Login startup and desktop shortcuts contain absolute paths. Recreate them after
 moving the source/interpreter. They are per-user and need no administrator access.
@@ -90,3 +97,12 @@ shortcut permissions and manual fallback on actual GNOME/Wayland and KDE/Wayland
 Protocol tests use a mock D-Bus backend; they do not validate a real compositor.
 Flatpak source code lives under `/app/share/klip`; the native package uses
 `/usr/share/klip`. Both identify as `io.github.workwithmanish.klip` for portals.
+
+## Release workflow
+
+The GitHub workflow builds/tests Debian and Flatpak artifacts. A `v*` tag runs
+those checks and publishes a pre-release with both assets/checksums only if both
+jobs succeed. Update app/build version, workflow filenames, AppStream metadata,
+release notes and user instructions together when preparing a new version.
+Never replace an existing release tag to hide a fix; publish a new version.
+See [TESTING.md](TESTING.md) for what automated success does and does not establish.
