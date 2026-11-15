@@ -19,6 +19,18 @@ MODULES = ('klip.py', 'preferences.py', 'geometry_tools.py', 'icons.py',
 def archive(files):
     buffer = io.BytesIO()
     with tarfile.open(fileobj=buffer, mode='w', format=tarfile.USTAR_FORMAT) as tar:
+        directories = set()
+        for name in files:
+            parent = Path(name).parent
+            while str(parent) != '.':
+                directories.add(parent.as_posix())
+                parent = parent.parent
+        for name in sorted(directories, key=lambda value: (value.count('/'), value)):
+            item = tarfile.TarInfo('./'+name+'/')
+            item.type, item.mode = tarfile.DIRTYPE, 0o755
+            item.uid = item.gid = item.mtime = 0
+            item.uname = item.gname = 'root'
+            tar.addfile(item)
         for name, (data, mode) in sorted(files.items()):
             item = tarfile.TarInfo('./'+name)
             item.size, item.mode = len(data), mode
