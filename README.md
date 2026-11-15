@@ -1,40 +1,67 @@
 # Klip
 
-Take a screenshot, draw on it, add text, and save or copy it—all from your Linux desktop.
+**Take a screenshot, draw on it, add text, and save or copy it.**
+Klip runs in the tray near your desktop clock. This project is in early development.
 
-Klip stays in your system tray, near the clock. After setup, you can open it from
-your application menu without keeping a terminal open.
+## Linux, Debian, Ubuntu, Kali… what is the difference?
 
-> **Early development:** Kali Linux with XFCE has been tested manually. Debian 13
-> package installation passes automated checks. Other Linux desktops still need testing.
+Windows and macOS are operating systems. **Linux** is a kernel—the core of an
+operating system. Complete operating systems built around it are called
+**Linux distributions**, or **distros**. There are hundreds; you do not need to
+learn them all to use Klip.
 
-## 1. Check whether Klip can run on your computer
+| Name | Simple explanation |
+| --- | --- |
+| Debian | A Linux distribution; the base for many others. |
+| Ubuntu | A Linux distribution based on Debian. |
+| Linux Mint | Usually based on Ubuntu; a Debian-based edition also exists. |
+| Kali Linux | Based on Debian, with a focus on security tools. |
+| Fedora, Arch, openSUSE | Other Linux distribution families. |
+| XFCE, GNOME, KDE Plasma | Desktop interfaces, not separate operating systems. |
+| X11 / Wayland | Systems used by the desktop to display windows and handle input. |
 
-Klip currently needs a **Linux desktop using X11**. It does not capture screens
-on Wayland yet. Windows and macOS are not supported.
+Being based on Debian **does not automatically mean every Debian app works**
+on Ubuntu, Mint, or Kali. Versions and available dependencies also matter.
 
-Not sure what you use? Open a terminal and paste:
+## Who is Klip for right now?
+
+| Your system | Current Klip status |
+| --- | --- |
+| **Kali Linux + XFCE + X11** | Main tested desktop environment. |
+| **Debian 13 + X11** | Package install and automated editor checks pass; real desktop testing is pending. |
+| Ubuntu, Mint, other Linux distributions | Not verified yet. No general support claim. |
+| Linux desktop using Wayland | Screen capture is not supported yet. |
+| Windows / macOS | Not supported. |
+
+Check your display session in a terminal:
 
 ```bash
 echo "$XDG_SESSION_TYPE"
 ```
 
-- **`x11`** → continue below.
-- **`wayland`** → use an X11 session if your login screen offers one. Otherwise,
-  this version of Klip cannot capture your screen yet.
-- **Nothing printed** → run the command in a terminal inside your graphical desktop.
+**`x11`** → continue. **`wayland`** → this version cannot capture your screen.
+If your login screen offers an X11 session, you can choose it before logging in.
 
-The instructions below are for **Kali Linux and Debian 13**. They have not been
-verified on Ubuntu, Mint, or other distributions.
+## Install Klip: choose ONE method
 
-## 2. Install Klip
+These instructions target **Kali/XFCE/X11 and Debian 13/X11**. Internet access
+is needed to install dependencies. Use your normal desktop account; do not
+launch Klip with `sudo`.
 
-**There is no public release download yet.** For now, use the setup below.
-You only need to do this once. It downloads Klip and installs its requirements
-in a separate environment so they do not replace your system Python packages.
+| Method | Best for | Available now? |
+| --- | --- | --- |
+| **A. Source installation** | Trying Klip today and getting updates | Yes |
+| **B. Local `.deb` package** | Installing an independent system application | Yes, build it first |
+| Download a ready-made `.deb` | Easiest future installation | **Not yet—Releases is empty** |
 
-Open a terminal as your usual desktop user. Paste these commands **one line at
-a time**. If a command reports an error, stop and check [Need help?](#need-help).
+Do not combine A and B. If you already installed a development/shared-folder
+version, read [migration instructions](docs/DEVELOPMENT.md#migrate-from-the-shared-folder-development-setup)
+before switching to B.
+
+### A. Install from source
+
+Open a terminal and run each line in order. If a command fails, stop and copy
+the error. This first-time setup expects that `~/klip` does not already exist.
 
 ```bash
 sudo apt update
@@ -46,81 +73,12 @@ python3 -m venv .venv
 .venv/bin/python install_desktop.py
 ```
 
-Your password may be requested by `sudo`. No characters appear while you type it;
-that is normal. An internet connection is needed for this setup.
+Now open your application menu, search **Klip**, and click it. Look for its
+purple icon near the clock. You can close the terminal.
 
-**Already have a `klip` folder?** These first-time instructions will not overwrite
-it. See [Updating an existing installation](#updating-an-existing-installation).
+**Keep `~/klip` and its `.venv` folder:** this method uses them to run.
 
-## 3. Open Klip
-
-1. Open your Linux application menu.
-2. Search for **Klip** and click it.
-3. Look near the clock for the purple Klip icon. Klip starts there rather than
-   opening a large window.
-4. Click/right-click the icon and choose **Capture area** or **Settings**.
-
-You can close the setup terminal now. **Keep the `klip` folder and its `.venv`
-folder**—this development installation uses them to run the app.
-
-## 4. Take your first screenshot
-
-1. Choose **Capture area** from the tray icon.
-2. Drag across the part of the screen you want.
-3. Adjust the selection by dragging inside it or using its edge/corner handles.
-4. Click **Capture**. To cancel, click **Cancel** or press **Esc**.
-5. In the editor, choose a drawing or text tool. Hover an icon to see its name.
-6. Click **Save** to create an image file, or **Copy** to paste it into another app.
-
-Closing the editor keeps Klip running in the tray. Choose **Quit Klip** from the
-tray menu when you want to exit completely.
-
-## Useful tools
-
-| What you want to do | What to use |
-| --- | --- |
-| Draw freely | Pen |
-| Point something out | Arrow, Rectangle, or Ellipse |
-| Mark a passage | Highlight |
-| Add a note | Text: drag a box and type directly inside it |
-| Move or resize a shape | Select: click the shape, then drag it or its handles |
-| Undo a mistake | Undo / Ctrl+Z |
-| Save or copy | Save / Ctrl+S or Copy / Ctrl+C |
-| Add date, time, and timezone | Enable Timestamp at the bottom of the editor |
-
-For text, drag its top bar to move the box and its corner to resize it.
-**Enter** applies the text, **Shift+Enter** adds a new line, and **Esc** cancels.
-After applying, text and pen marks cannot be reselected; Undo can remove them.
-Saved images do not retain editable shapes.
-
-## Set a capture keyboard shortcut
-
-On **XFCE**:
-
-1. Open **Settings** from Klip's tray menu.
-2. Choose **Shortcuts**.
-3. Click the global capture shortcut field and press your preferred keys.
-4. Click **Apply capture shortcut**.
-
-Klip warns you if the keys are already assigned. Choose another combination.
-Press the shortcut while your Linux desktop has keyboard focus.
-
-On other desktops, use that desktop's keyboard settings to assign a shortcut
-to this command (replace `YOUR_USER` with your Linux username):
-
-```text
-/home/YOUR_USER/klip/.venv/bin/python /home/YOUR_USER/klip/klip.py --capture
-```
-
-## Start Klip automatically
-
-Open **Settings → General**, enable **Start Klip when I log in**, then click
-**Save general settings**. Klip will start in the tray at your next login.
-
-## Updating an existing installation
-
-These commands are for an installation made by cloning this repository using
-the instructions above. Quit Klip from its tray menu first:
+Update later: quit Klip from its tray menu, then run:
 
 ```bash
 cd "$HOME/klip"
@@ -129,50 +87,129 @@ git pull --ff-only
 .venv/bin/python install_desktop.py
 ```
 
-Then open Klip from your application menu again. If you use a shared Windows
-folder, a different Python environment, or a `.deb`, follow
-[the installation notes](docs/DEVELOPMENT.md) instead of mixing setups.
+Open Klip from the menu again. If you changed the source yourself, review
+`git status` before updating rather than discarding your changes.
 
-## Need help?
+### B. Build and install a `.deb`
 
-| Problem | What to check |
-| --- | --- |
-| Klip does not appear in the menu | Run the last installer command again, then reopen the menu. |
-| Clicking Klip opens no window | Check the tray near the clock—this is expected. |
-| Capture says X11 is required | Your session uses Wayland; see step 1. |
-| Selection stays on screen | Click Capture or press Enter; Esc cancels. |
-| Shortcut does nothing | Click Apply capture shortcut and check for a conflict warning. |
-| Install command fails | Stop and copy the exact error. Do not change your system repositories. |
+A **`.deb` is an installation package** used by Debian and related systems.
+This method installs Klip as a system application; it does not need a source
+folder or a Python virtual environment afterward.
 
-To see startup errors, run from a terminal:
+There is no download in Releases yet. Build the development package locally:
 
 ```bash
-"$HOME/klip/.venv/bin/python" "$HOME/klip/klip.py" --settings
+sudo apt update
+sudo apt install -y git python3
+git clone https://github.com/workwithmanish/klip.git "$HOME/klip-build"
+cd "$HOME/klip-build"
+python3 packaging/build_deb.py
+sudo apt install ./dist/klip_0.1.0_all.deb
 ```
 
-[Report a problem](https://github.com/workwithmanish/klip/issues) with your Linux
-version, desktop, and error message. Remove private information from screenshots.
+Use a different unused folder name if `~/klip-build` already exists. APT installs
+the required Qt/Python packages. If dependencies are unavailable, stop—do not
+add another distribution's repositories to force installation.
 
-## Remove Klip
+Search **Klip** in your application menu and open it. After installation, the
+`klip-build` folder is not needed to run the app. This package is experimental;
+real desktop testing outside Kali is still pending.
 
-First disable login startup and clear/apply Klip's capture shortcut in Settings,
-then choose **Quit Klip**. Remove the menu launcher:
+For a later update, quit Klip and repeat the build/install from your build checkout:
+
+```bash
+cd "$HOME/klip-build"
+git pull --ff-only
+python3 packaging/build_deb.py
+sudo apt install ./dist/klip_0.1.0_all.deb
+```
+
+The version/filename will change for future releases; use the name printed by
+the build command.
+
+## Use Klip: menu, shortcut, or terminal
+
+| How | What to do |
+| --- | --- |
+| **Application menu** | Search Klip, open it, then use its tray icon → Capture area. |
+| **Keyboard shortcut** | In Klip Settings → Shortcuts, record keys and click Apply capture shortcut. Automatic setup supports XFCE. |
+| **Terminal** | Use the command below for your installation method. Useful for seeing errors. |
+
+**Source installation (A):**
+
+```bash
+"$HOME/klip/.venv/bin/python" "$HOME/klip/klip.py" --capture
+```
+
+**Installed `.deb` (B):**
+
+```bash
+klip --capture
+```
+
+Replace `--capture` with `--settings` to open the control panel. Once started
+from the menu, Klip does not need an open terminal. Enable **Settings → General →
+Start Klip when I log in → Save general settings** for automatic startup.
+
+On desktops other than XFCE, global shortcuts must be configured manually in
+the desktop's keyboard settings using the appropriate capture command above.
+
+## Your first screenshot
+
+1. Tray icon → **Capture area**.
+2. Drag to select an area. Move it or resize it using the edge/corner handles.
+3. Click **Capture** (or press Enter). **Esc** cancels.
+4. Choose a toolbar tool; hover an icon to see its name.
+5. Click **Save** or **Copy** to paste into another app.
+
+| Tool/action | Use |
+| --- | --- |
+| Pen / Arrow / Rectangle / Ellipse | Draw or point things out. |
+| Highlight | Mark an area with transparent color. |
+| Text | Drag a box and type; move by its header, resize by its corner. |
+| Select | Click an editable shape to move/resize it. |
+| Timestamp | Add date, time, and timezone; adjust size and opacity. |
+| Ctrl+Z / Ctrl+Shift+Z | Undo / redo. |
+| Ctrl+S / Ctrl+C | Save / copy. |
+
+Text: **Enter** applies, **Shift+Enter** adds a line, **Esc** cancels.
+Applied text and pen strokes cannot be reselected; Undo can remove them.
+Exported images do not keep editable objects. Closing an editor leaves Klip
+in the tray; choose **Quit Klip** to exit completely.
+
+## Common questions
+
+- **Nothing opens after clicking Klip?** Check the tray near the clock; this is expected.
+- **Menu entry missing?** For A, rerun `install_desktop.py`; for B, check that APT finished successfully.
+- **Selection seems stuck?** Click Capture or press Enter. Esc cancels.
+- **Shortcut does nothing?** Click Apply, check for conflicts, and give your Linux desktop keyboard focus.
+- **Password is invisible while typing?** This is normal for `sudo`.
+- **Install failed?** Stop and [report the exact error](https://github.com/workwithmanish/klip/issues), with your distro, desktop, and X11/Wayland result.
+
+## Uninstall
+
+First disable login startup, clear/apply Klip's capture shortcut in Settings,
+and quit Klip from the tray.
+
+**A. Source:** remove the menu launcher, then delete the `klip` folder in your file manager:
 
 ```bash
 "$HOME/klip/.venv/bin/python" "$HOME/klip/install_desktop.py" --remove
 ```
 
-You can then delete the `klip` project folder using your file manager. Your saved
-screenshots are not deleted. Per-user preferences are retained.
+**B. Package:**
 
-## Privacy and project details
+```bash
+sudo apt remove klip
+```
 
-Klip makes no network requests while capturing/editing. Screenshots remain local
-unless you save, copy, or share them. Pixelation is a visual effect; do not rely
-on it to securely remove sensitive information.
+Your saved screenshots are not deleted. User preferences are retained.
 
-Want to build a `.deb` or contribute? See [Developer and package instructions](docs/DEVELOPMENT.md)
-and [CONTRIBUTING.md](CONTRIBUTING.md).
+## More information
 
-Original Klip code/artwork: [MIT license](LICENSE).
-Qt/PySide6: [third-party notices](THIRD_PARTY.md).
+Klip makes no network requests while capturing/editing. Captures stay local
+unless saved, copied, or shared. Pixelation is a visual effect, not guaranteed
+secure redaction. No OCR, true blur, or Wayland capture yet.
+
+[Developer/package details](docs/DEVELOPMENT.md) · [Contributing](CONTRIBUTING.md) ·
+[MIT license](LICENSE) · [Qt/PySide6 notices](THIRD_PARTY.md)
