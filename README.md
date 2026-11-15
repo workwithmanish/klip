@@ -54,7 +54,7 @@ launch Klip with `sudo`.
 | --- | --- | --- |
 | **A. Source installation** | Trying Klip today and getting updates | Yes |
 | **B. Local `.deb` package** | Installing an independent system application | Yes, build it first |
-| Download a ready-made `.deb` | Easiest future installation | **Not yet—Releases is empty** |
+| **C. Download a ready-made `.deb`** | Trying the older alpha | v0.1.0-alpha available; latest development version is 0.2.1 |
 
 Do not combine A and B. If you already installed a development/shared-folder
 version, read [migration instructions](docs/DEVELOPMENT.md#migrate-from-the-shared-folder-development-setup)
@@ -98,7 +98,7 @@ A **`.deb` is an installation package** used by Debian and related systems.
 This method installs Klip as a system application; it does not need a source
 folder or a Python virtual environment afterward.
 
-There is no download in Releases yet. Build the development package locally:
+For the latest development version (0.2.1), build the package locally:
 
 ```bash
 sudo apt update
@@ -128,6 +128,19 @@ sudo apt install ./dist/klip_0.2.1_all.deb
 
 The version/filename will change for future releases; use the name printed by
 the build command.
+
+### C. Download the published alpha
+
+Visit [Releases](https://github.com/workwithmanish/klip/releases/tag/v0.1.0-alpha)
+and download `klip_0.1.0_all.deb`. In a terminal opened in the download folder:
+
+```bash
+sudo apt install ./klip_0.1.0_all.deb
+```
+
+This older release does **not** contain the newer OCR, logo, loading screen or
+light-theme changes. Use A or B for the latest version. Do not downgrade an
+existing 0.2.1 installation to the older alpha.
 
 ## Use Klip: menu, shortcut, or terminal
 
@@ -160,14 +173,14 @@ the desktop's keyboard settings using the appropriate capture command above.
 
 ### Extract text from a screenshot (OCR)
 
-In version 0.2.1 development builds, choose **tray → Capture text (OCR)** and
+In the current development version, choose **tray → Capture text (OCR)** and
 select an area. Or click **Extract text (OCR)** in the image editor. Recognition
 runs locally; the editor timestamp watermark is excluded.
 
-Choose English, Hindi, or English + Hindi, then **Extract text / Retry**.
-Edit the recognized text, **Copy text**, or **Save .txt**. Retry replaces a
-successful result. Try Text block/Scattered text/Automatic layout or toggle
-image improvement if recognition is poor. OCR can make mistakes, especially
+English/Hindi selection and image preparation happen automatically using the
+installed language packs. A loading screen shows progress while OCR runs;
+you can cancel. Edit the result, **Copy text**, or **Save .txt**. Retry replaces
+a successful result. OCR can make mistakes, especially
 in punctuation or code—review text before using it.
 
 The `.deb` installs English OCR dependencies. Source users install them once:

@@ -23,7 +23,8 @@ shortcuts and startup still require manual desktop checks (CONTRIBUTING.md).
 
 ## Install an experimental .deb
 
-There is no public release asset yet. Build from a checkout, then:
+The published v0.1.0-alpha is older than development version 0.2.1.
+For the latest code, build from a checkout, then:
 
 ```bash
 sudo apt install ./dist/klip_0.2.1_all.deb
