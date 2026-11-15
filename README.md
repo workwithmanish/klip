@@ -27,53 +27,116 @@ on Ubuntu, Mint, or Kali. Versions and available dependencies also matter.
 
 ## Who is Klip for right now?
 
-**Read the distro row AND the display-session row.** For example, Fedora 44
-with GNOME/Wayland has both an untested distro/package setup and an unsupported
-capture session. A different installer format cannot remove the Wayland limitation.
+**Klip currently targets desktop Linux on X11.** Kali/XFCE/X11 is manually
+tested; Debian 13 package/editor/OCR checks pass. Everything else below is
+classified for clarity, not claimed as supported.
 
-### Linux distributions and installer families
+### How to read the categories
 
-| Package family | Distribution | Usual package / manager | Klip status right now |
-| --- | --- | --- | --- |
-| Debian / DEB | **Kali Linux Rolling** | `.deb` / APT | **Main tested environment: XFCE + X11.** Fresh package install and capture manually tested. |
-| Debian / DEB | **Debian 13** | `.deb` / APT | Package installation and automated editor/OCR tests pass. Real desktop capture testing pending; requires X11. |
-| Debian / DEB | **Ubuntu** | `.deb` / APT | Not tested. Dependency availability depends on Ubuntu version; X11 required for capture. |
-| Debian / DEB | **Linux Mint — Ubuntu edition** | `.deb` / APT | Not tested. Being Ubuntu-based does not establish compatibility; X11 required. |
-| Debian / DEB | **LMDE — Linux Mint Debian Edition** | `.deb` / APT | Not tested. Dependency availability depends on its Debian base; X11 required. |
-| Debian / DEB | **Pop!_OS** | `.deb` / APT | Not tested. Check the actual session; Wayland capture is unsupported. |
-| Debian / DEB | **Zorin OS** | `.deb` / APT | Not tested. Check dependency versions and X11/Wayland session. |
-| RPM | **Fedora — including Fedora 44** | `.rpm` / DNF | No Klip RPM yet; source installation untested. **The reported Fedora 44 GNOME/Wayland setup cannot capture yet.** |
-| RPM | **RHEL / Rocky Linux / AlmaLinux** | `.rpm` / DNF | No Klip RPM; no testing. Python/Qt versions and desktop session must be checked. |
-| RPM | **openSUSE Leap / Tumbleweed** | `.rpm` / Zypper | No Klip RPM; no testing. RPM files are not automatically interchangeable with Fedora packages. |
-| Arch | **Arch Linux** | Arch packages / Pacman | No native Klip package; source installation and capture untested. |
-| Arch | **EndeavourOS / Manjaro** | Arch-derived packages / Pacman | No native Klip package; source installation and capture untested. |
-| Alpine | **Alpine Linux** | `.apk` / APK | No native package; untested. Different system libraries may require additional work. |
-| Nix | **NixOS** | Nix packages / Nix | No Klip Nix package; untested. The standard source-install commands are not NixOS instructions. |
-| Independent | **Gentoo** | Ebuilds / Portage | No Klip ebuild; source installation and capture untested. |
-
-These are common distribution families, not a list of every Linux distribution.
-**Only Kali/XFCE/X11 is manually verified.** A distro appearing here does not
-mean it is supported, and a package family does not guarantee dependencies.
-The installation commands below target Kali and Debian 13 only.
-
-### Desktop and screen-capture support
-
-| Desktop / display session | Capture status | Global shortcut setup |
+| Layer | What it tells you | Examples |
 | --- | --- | --- |
-| **XFCE + X11 on Kali** | **Manually tested.** | Automatic registration in Klip, with conflict checking. |
-| **XFCE + X11 on another distro** | Untested; depends on working Python/Qt and desktop integration. | Integration targets XFCE; distro-specific testing pending. |
-| **GNOME + X11, where available** | Untested. | Configure manually in GNOME keyboard settings. |
-| **KDE Plasma + X11, where available** | Untested. | Configure manually in KDE keyboard settings. |
-| **Cinnamon / MATE + X11** | Untested. | Configure manually in desktop keyboard settings. |
-| **GNOME / KDE / any desktop using Wayland** | **Screen capture and capture-to-OCR unsupported.** Existing-image editing/OCR may work if dependencies run; untested. | No Wayland shortcut-portal integration yet. |
+| Kernel / OS family | The underlying system | Linux, Windows NT, Darwin, FreeBSD |
+| Distribution lineage | Which project a Linux OS is derived from | Debian → Ubuntu → Mint; Arch → EndeavourOS |
+| Package ecosystem | How software is built/installed | DEB/APT, RPM/DNF, Pacman, Nix, Portage |
+| Desktop / session | The interface and screen-capture mechanism | XFCE/X11, GNOME/Wayland |
+| CPU / system libraries | Whether dependencies can run | x86_64 vs ARM64; glibc vs musl |
 
-### Operating systems outside Linux
+**Debian is a distribution lineage; RPM is a package format.** They are not
+identical kinds of category. Fedora and openSUSE both use RPM but have different
+lineages, repositories and dependency versions. No single number describes all
+Linux “types.” New distributions, spins and forks appear continually.
 
-| Operating system | Klip support |
-| --- | --- |
-| **Windows** | Not a supported release target; no installer or desktop-capture support claim. |
-| **macOS** | Not supported; no installer or desktop-capture testing. |
-| **FreeBSD / OpenBSD** | Not Linux; no package or runtime testing. |
+### 1. Kernel and operating-system families
+
+| Kernel / OS ecosystem | Examples | Relationship to Linux | Klip status |
+| --- | --- | --- | --- |
+| **Desktop/server Linux** | Debian, Kali, Fedora, Ubuntu, Arch, etc. | Linux kernel, multiple userlands/package systems | The only current target; see distro and session tables below. |
+| **Android** | Android / AOSP, LineageOS | Linux kernel with Android frameworks and Bionic libc | Unsupported; a Linux kernel does not make it a desktop-Linux target. |
+| **ChromeOS** | ChromeOS, ChromiumOS | Linux-based OS with its own desktop/security model | Unsupported. A Linux development container is a separate environment, not native support. |
+| **Windows NT** | Windows desktop/server | Separate kernel family | Unsupported release target. |
+| **Darwin / XNU** | macOS, iOS, iPadOS | Separate kernel/userland family | Unsupported. |
+| **FreeBSD** | FreeBSD, GhostBSD | BSD-derived, its own kernel/userland | Unsupported. |
+| **OpenBSD** | OpenBSD | BSD-derived, its own kernel/userland | Unsupported. |
+| **NetBSD** | NetBSD | BSD-derived, its own kernel/userland | Unsupported. |
+| **DragonFly BSD** | DragonFly BSD | Separate BSD-derived kernel/userland | Unsupported. |
+| **illumos / Solaris** | illumos distributions, OpenIndiana, Oracle Solaris | Separate Unix kernel ecosystems | Unsupported. |
+| **GNU Hurd** | GNU/Hurd, Debian GNU/Hurd port | GNU Mach/Hurd, not the Linux kernel | Unsupported, even where Debian packaging tools are used. |
+| **Haiku** | Haiku | Independent desktop OS/kernel | Unsupported. |
+| **Zircon** | Fuchsia | Separate kernel/OS architecture | Unsupported. |
+| **Other independent / research / embedded OSes** | Redox, SerenityOS, ReactOS, QNX, MINIX, FreeRTOS, Zephyr | Multiple unrelated kernels and runtime models | Unsupported; no general Python/Qt desktop assumption. |
+
+This is an ecosystem map, **not a claim to list every OS ever created**. Legacy
+systems, vendor forks, experimental kernels and embedded products are open-ended.
+
+### 2. Linux distributions, lineage and package systems
+
+| Lineage / ecosystem | Distributions / variants | Package or deployment tools | Klip status |
+| --- | --- | --- | --- |
+| **Debian** | Debian 13 | DEB · APT/dpkg | Automated package/editor/OCR checks pass; real desktop testing pending. X11 required. |
+| Debian-derived / security | **Kali Linux Rolling** | DEB · APT/dpkg | **Main manually tested system: XFCE + X11**, including fresh package install. |
+| Debian-derived / desktop | LMDE, MX Linux, antiX, SparkyLinux, Q4OS | Generally DEB · APT/dpkg | Untested; base version, dependencies and session must be checked. |
+| Debian-derived / alternative init | Devuan | DEB · APT/dpkg | Untested; no systemd assumption is sufficient to establish support. |
+| **Ubuntu** (Debian-derived) | Ubuntu, Kubuntu, Xubuntu, Lubuntu, Ubuntu MATE | DEB · APT/dpkg | Untested; desktop/session and available PySide6 version vary. |
+| Ubuntu-derived | Linux Mint Ubuntu edition, Pop!_OS, Zorin OS, elementary OS, KDE neon | DEB · APT/dpkg | Untested. Debian ancestry does not guarantee package compatibility. |
+| **Fedora** | Fedora Workstation, Server, desktop Spins | RPM · DNF | No Klip RPM or Fedora runtime testing yet. **Reported Fedora 44 GNOME/Wayland cannot capture.** |
+| Fedora image-based variants | Silverblue, Kinoite, other Fedora Atomic Desktops | Image deployments; rpm-ostree/variant-specific tooling | Untested; ordinary DNF installation instructions do not apply universally. |
+| **RHEL ecosystem** | RHEL, CentOS Stream, Rocky Linux, AlmaLinux, Oracle Linux | RPM · DNF and platform-specific tooling | No Klip RPM; untested. Python/Qt availability varies by release. |
+| **SUSE ecosystem** | openSUSE Leap, Tumbleweed; SUSE Linux Enterprise | RPM · Zypper | No Klip RPM; untested. Fedora RPMs are not automatically compatible. |
+| SUSE transactional variants | openSUSE MicroOS, Aeon and related variants | Image/transactional workflows; variant-specific app delivery | Untested; do not assume conventional desktop package instructions apply. |
+| Mandriva-related RPM ecosystems | Mageia, OpenMandriva | RPM · urpmi or DNF depending on distro | No Klip package; untested. |
+| Independent RPM ecosystems | PCLinuxOS | RPM · APT-RPM / distro tooling | Untested. APT usage here does not imply DEB compatibility. |
+| **Arch** | Arch Linux | Pacman · pkg.tar packages | No native Klip package; source/runtime untested. |
+| Arch-derived | EndeavourOS, Manjaro, Garuda, CachyOS | Pacman and distro repositories | Untested; not automatically verified by Arch ancestry. |
+| **Gentoo** | Gentoo, Calculate Linux | Portage · ebuild recipes/source builds | No Klip ebuild; untested. |
+| **Slackware** | Slackware, Slackware-derived systems | pkgtools/slackpkg · tar-based packages | No Klip package; untested. |
+| **Alpine** | Alpine Linux | APK · .apk packages | No Klip package; untested. musl-based libraries can affect binary dependencies. |
+| Alpine-derived mobile | postmarketOS | APK plus mobile-specific integration | Unsupported mobile environment; not a tested desktop target. |
+| **Void** | Void Linux (glibc or musl) | XBPS | No Klip package; both library variants untested. |
+| **NixOS** | NixOS and derivatives | Nix · declarative configurations/store | No Klip Nix package; untested. Standard filesystem/install assumptions differ. |
+| **GNU Guix System** | GNU Guix System | Guix · declarative/source-based tooling | No Klip Guix package; untested. |
+| **Solus** | Solus | eopkg | No Klip package; untested. |
+| **CRUX** | CRUX | Ports recipes · pkgutils | No Klip port; untested. |
+| **Linux From Scratch** | LFS, Beyond Linux From Scratch | User-assembled; no single mandatory package manager | No general compatibility claim; environment-specific work required. |
+| **Embedded / appliance Linux** | OpenWrt, Buildroot-based systems, Yocto-based products | Release/product-specific packages or generated images | Unsupported; many lack a compatible graphical desktop/Python/Qt stack. |
+| **Purpose-built Linux systems** | Tails, Qubes OS, SteamOS, security/appliance derivatives | Base- and product-specific packaging/security/deployment rules | Untested as products. Base lineage alone does not establish screenshot access or support. |
+
+Examples are grouped by ecosystem, not a complete census of forks. Distribution
+versions and deployment tools evolve; check the project's own documentation.
+Only the Kali and Debian rows above carry actual verification claims.
+
+### 3. Desktop and display sessions — applies to EVERY Linux family
+
+| Desktop / environment | Session | Capture / shortcut support |
+| --- | --- | --- |
+| **XFCE on Kali** | **X11** | **Manually tested capture.** Automatic Klip shortcut setup with conflict checking. |
+| XFCE on another distro | X11 | Untested; XFCE integration exists, distro dependencies/integration need testing. |
+| GNOME | X11, where available | Untested; manual desktop shortcut setup. |
+| KDE Plasma | X11, where available | Untested; manual desktop shortcut setup. |
+| Cinnamon / MATE / LXQt / LXDE | X11 | Untested; manual desktop shortcut setup. |
+| Standalone window managers, e.g. i3/Openbox | X11 | Untested; tray availability and shortcut setup vary. |
+| **GNOME / KDE / XFCE / any desktop** | **Wayland** | **No screen capture or capture-to-OCR yet.** RPM, DEB or source installation cannot remove this limitation. |
+| Wayland compositors, e.g. Sway/Hyprland | Wayland | Unsupported capture; portal backend not implemented. |
+| Remote desktop / nested sessions | X11 or Wayland | Untested; screenshot and shortcut permissions are session-dependent. |
+| Headless server / console / container without a desktop | No graphical session | No supported interactive capture workflow. |
+
+Opening an existing image for editing/OCR may work on otherwise untested systems
+if Python/Qt/Tesseract run, but that does not mean their screen capture works.
+
+### 4. CPU, libraries and installer formats are separate questions
+
+| Category | Examples | Klip meaning |
+| --- | --- | --- |
+| CPU architecture | x86_64/amd64, ARM64/aarch64, ARM32, RISC-V | Only x86_64 has current manual/CI evidence. Others untested; dependencies must exist for that CPU. |
+| C library | glibc, musl | PySide6 wheel/native package availability differs; both are not automatically interchangeable. |
+| Native packages | DEB, RPM, Arch packages, APK, XBPS, Nix/Guix definitions | Klip currently provides a DEB build setup only. |
+| Cross-distro app delivery | Flatpak, Snap, AppImage | Delivery formats, **not kernel/distro families**. No Klip builds provided yet; sandbox/portal integration would need testing. |
+| Source installation | Python + PySide6 + Tesseract | Avoids a specific installer format, but does not bypass Wayland or dependency limitations. |
+
+Reference documentation: [Debian](https://www.debian.org/intro/about),
+[Fedora packages](https://docs.fedoraproject.org/en-US/quick-docs/dnf/),
+[Void/XBPS](https://docs.voidlinux.org/), [Alpine/musl](https://alpinelinux.org/about/),
+[NixOS](https://nixos.org/manual/nixos/stable/),
+[FreeBSD vs Linux](https://docs.freebsd.org/en/books/faq/).
 
 Check your display session in a terminal:
 
