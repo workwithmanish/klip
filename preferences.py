@@ -307,7 +307,7 @@ class ControlPanel(QWidget):
         logo.setPixmap(QIcon(str(Path(__file__).parent / 'assets' / 'klip.png')).pixmap(80, 80))
         label('Klip', 'font-size: 36px; font-weight: 600; color: #0b1c30;', 8)
         label('Capture. Mark. Share.', 'font-size: 15px; color: #64748b;', 12)
-        label('v0.2.0 · Alpha', 'font-size: 11px; color: #be0037;', 24)
+        label('v0.2.1 · Alpha', 'font-size: 11px; color: #be0037;', 24)
         label('Screenshot capture and annotation for Linux.', 'color: #64748b;', 28)
         label('Made by Manish', 'color: #0b1c30;', 6)
 

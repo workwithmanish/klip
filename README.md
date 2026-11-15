@@ -106,7 +106,7 @@ sudo apt install -y git python3
 git clone https://github.com/workwithmanish/klip.git "$HOME/klip-build"
 cd "$HOME/klip-build"
 python3 packaging/build_deb.py
-sudo apt install ./dist/klip_0.2.0_all.deb
+sudo apt install ./dist/klip_0.2.1_all.deb
 ```
 
 Use a different unused folder name if `~/klip-build` already exists. APT installs
@@ -123,7 +123,7 @@ For a later update, quit Klip and repeat the build/install from your build check
 cd "$HOME/klip-build"
 git pull --ff-only
 python3 packaging/build_deb.py
-sudo apt install ./dist/klip_0.2.0_all.deb
+sudo apt install ./dist/klip_0.2.1_all.deb
 ```
 
 The version/filename will change for future releases; use the name printed by
@@ -160,7 +160,7 @@ the desktop's keyboard settings using the appropriate capture command above.
 
 ### Extract text from a screenshot (OCR)
 
-In version 0.2.0 development builds, choose **tray → Capture text (OCR)** and
+In version 0.2.1 development builds, choose **tray → Capture text (OCR)** and
 select an area. Or click **Extract text (OCR)** in the image editor. Recognition
 runs locally; the editor timestamp watermark is excluded.
 

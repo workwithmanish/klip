@@ -43,8 +43,13 @@ class OCRTests(unittest.TestCase):
     def test_async_result_and_editing(self):
         self.window.start()
         self.assertFalse(self.window.extract.isEnabled())
+        self.assertIs(self.window.content.currentWidget(),self.window.loading)
+        self.assertFalse(self.window.copy_button.isEnabled())
         self.wait_done()
         self.assertEqual(self.window.result.toPlainText(),'Recognized sample text')
+        self.assertIs(self.window.content.currentWidget(),self.window.result)
+        self.assertTrue(self.window.copy_button.isEnabled())
+        self.assertFalse(self.window.loading_timer.isActive())
         self.window.result.setPlainText('Edited result')
         self.assertEqual(self.window.result.toPlainText(),'Edited result')
         self.assertIsNone(self.window.temp)

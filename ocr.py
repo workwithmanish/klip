@@ -5,7 +5,8 @@ from pathlib import Path
 from PySide6.QtCore import QProcess, QTimer, Qt
 from PySide6.QtGui import QImage, QPainter, QColor
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
-    QComboBox, QCheckBox, QPushButton, QPlainTextEdit, QApplication, QFileDialog)
+    QComboBox, QCheckBox, QPushButton, QPlainTextEdit, QApplication, QFileDialog,
+    QStackedWidget, QProgressBar)
 from ui_spacing import polish_inputs
 from theme import stylesheet
 
@@ -82,7 +83,36 @@ class OCRWindow(QWidget):
         self.options.hide()
         self.result = QPlainTextEdit()
         self.result.setPlaceholderText('Recognized text appears here. You can edit it before copying or saving.')
-        root.addWidget(self.result,1)
+        self.content = QStackedWidget()
+        self.content.addWidget(self.result)
+        self.loading = QWidget()
+        loading_layout = QVBoxLayout(self.loading)
+        loading_layout.setContentsMargins(56,32,56,32)
+        loading_layout.setSpacing(18)
+        loading_layout.addStretch(1)
+        loading_title = QLabel('Reading text…')
+        loading_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        loading_title.setStyleSheet('font-size: 23px; font-weight: 600;')
+        loading_layout.addWidget(loading_title)
+        self.loading_detail = QLabel('Processing your screenshot locally. Please wait.')
+        self.loading_detail.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.loading_detail.setWordWrap(True)
+        self.loading_detail.setStyleSheet('color: #64748b;')
+        loading_layout.addWidget(self.loading_detail)
+        self.progress = QProgressBar()
+        self.progress.setRange(0,0)
+        self.progress.setTextVisible(False)
+        self.progress.setFixedHeight(6)
+        self.progress.setMaximumWidth(320)
+        self.progress.setStyleSheet('QProgressBar { border: none; background: #e5eeff; border-radius: 3px; } QProgressBar::chunk { background: #e11d48; border-radius: 3px; }')
+        loading_layout.addWidget(self.progress,0,Qt.AlignmentFlag.AlignHCenter)
+        loading_layout.addStretch(1)
+        self.content.addWidget(self.loading)
+        root.addWidget(self.content,1)
+        self.elapsed = 0
+        self.loading_timer = QTimer(self)
+        self.loading_timer.setInterval(1000)
+        self.loading_timer.timeout.connect(self.tick_loading)
         self.status = QLabel('Ready. Click Extract text.')
         self.status.setWordWrap(True)
         root.addWidget(self.status)
@@ -95,8 +125,10 @@ class OCRWindow(QWidget):
         self.cancel.setEnabled(False)
         self.cancel.clicked.connect(self.cancel_run)
         copy = QPushButton('Copy text')
+        self.copy_button = copy
         copy.clicked.connect(lambda: QApplication.clipboard().setText(self.result.toPlainText()))
         save = QPushButton('Save .txt')
+        self.save_button = save
         save.clicked.connect(self.save_text)
         close = QPushButton('Close')
         close.clicked.connect(self.close)
@@ -112,6 +144,20 @@ class OCRWindow(QWidget):
         for control in (self.extract,self.language,self.layout_mode,self.improve):
             control.setEnabled(not value)
         self.cancel.setEnabled(value)
+        self.copy_button.setEnabled(not value)
+        self.save_button.setEnabled(not value)
+        self.result.setReadOnly(value)
+        self.content.setCurrentWidget(self.loading if value else self.result)
+        if value:
+            self.elapsed = 0
+            self.loading_detail.setText('Processing your screenshot locally. Please wait.')
+            self.loading_timer.start()
+        else:
+            self.loading_timer.stop()
+
+    def tick_loading(self):
+        self.elapsed += 1
+        self.loading_detail.setText(f'Processing locally · {self.elapsed}s elapsed\nYou can cancel at any time.')
 
     def start(self):
         if self.process is not None:

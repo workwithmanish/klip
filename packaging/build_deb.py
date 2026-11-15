@@ -94,7 +94,7 @@ Description: Screenshot capture and annotation tool for X11 desktops
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--version', default='0.2.0')
+    parser.add_argument('--version', default='0.2.1')
     parser.add_argument('--output', type=Path, default=ROOT/'dist')
     args = parser.parse_args()
     build(args.version, args.output)
