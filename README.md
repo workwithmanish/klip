@@ -27,13 +27,53 @@ on Ubuntu, Mint, or Kali. Versions and available dependencies also matter.
 
 ## Who is Klip for right now?
 
-| Your system | Current Klip status |
+**Read the distro row AND the display-session row.** For example, Fedora 44
+with GNOME/Wayland has both an untested distro/package setup and an unsupported
+capture session. A different installer format cannot remove the Wayland limitation.
+
+### Linux distributions and installer families
+
+| Package family | Distribution | Usual package / manager | Klip status right now |
+| --- | --- | --- | --- |
+| Debian / DEB | **Kali Linux Rolling** | `.deb` / APT | **Main tested environment: XFCE + X11.** Fresh package install and capture manually tested. |
+| Debian / DEB | **Debian 13** | `.deb` / APT | Package installation and automated editor/OCR tests pass. Real desktop capture testing pending; requires X11. |
+| Debian / DEB | **Ubuntu** | `.deb` / APT | Not tested. Dependency availability depends on Ubuntu version; X11 required for capture. |
+| Debian / DEB | **Linux Mint — Ubuntu edition** | `.deb` / APT | Not tested. Being Ubuntu-based does not establish compatibility; X11 required. |
+| Debian / DEB | **LMDE — Linux Mint Debian Edition** | `.deb` / APT | Not tested. Dependency availability depends on its Debian base; X11 required. |
+| Debian / DEB | **Pop!_OS** | `.deb` / APT | Not tested. Check the actual session; Wayland capture is unsupported. |
+| Debian / DEB | **Zorin OS** | `.deb` / APT | Not tested. Check dependency versions and X11/Wayland session. |
+| RPM | **Fedora — including Fedora 44** | `.rpm` / DNF | No Klip RPM yet; source installation untested. **The reported Fedora 44 GNOME/Wayland setup cannot capture yet.** |
+| RPM | **RHEL / Rocky Linux / AlmaLinux** | `.rpm` / DNF | No Klip RPM; no testing. Python/Qt versions and desktop session must be checked. |
+| RPM | **openSUSE Leap / Tumbleweed** | `.rpm` / Zypper | No Klip RPM; no testing. RPM files are not automatically interchangeable with Fedora packages. |
+| Arch | **Arch Linux** | Arch packages / Pacman | No native Klip package; source installation and capture untested. |
+| Arch | **EndeavourOS / Manjaro** | Arch-derived packages / Pacman | No native Klip package; source installation and capture untested. |
+| Alpine | **Alpine Linux** | `.apk` / APK | No native package; untested. Different system libraries may require additional work. |
+| Nix | **NixOS** | Nix packages / Nix | No Klip Nix package; untested. The standard source-install commands are not NixOS instructions. |
+| Independent | **Gentoo** | Ebuilds / Portage | No Klip ebuild; source installation and capture untested. |
+
+These are common distribution families, not a list of every Linux distribution.
+**Only Kali/XFCE/X11 is manually verified.** A distro appearing here does not
+mean it is supported, and a package family does not guarantee dependencies.
+The installation commands below target Kali and Debian 13 only.
+
+### Desktop and screen-capture support
+
+| Desktop / display session | Capture status | Global shortcut setup |
+| --- | --- | --- |
+| **XFCE + X11 on Kali** | **Manually tested.** | Automatic registration in Klip, with conflict checking. |
+| **XFCE + X11 on another distro** | Untested; depends on working Python/Qt and desktop integration. | Integration targets XFCE; distro-specific testing pending. |
+| **GNOME + X11, where available** | Untested. | Configure manually in GNOME keyboard settings. |
+| **KDE Plasma + X11, where available** | Untested. | Configure manually in KDE keyboard settings. |
+| **Cinnamon / MATE + X11** | Untested. | Configure manually in desktop keyboard settings. |
+| **GNOME / KDE / any desktop using Wayland** | **Screen capture and capture-to-OCR unsupported.** Existing-image editing/OCR may work if dependencies run; untested. | No Wayland shortcut-portal integration yet. |
+
+### Operating systems outside Linux
+
+| Operating system | Klip support |
 | --- | --- |
-| **Kali Linux + XFCE + X11** | Main tested desktop environment. |
-| **Debian 13 + X11** | Package install and automated editor checks pass; real desktop testing is pending. |
-| Ubuntu, Mint, other Linux distributions | Not verified yet. No general support claim. |
-| Linux desktop using Wayland | Screen capture is not supported yet. |
-| Windows / macOS | Not supported. |
+| **Windows** | Not a supported release target; no installer or desktop-capture support claim. |
+| **macOS** | Not supported; no installer or desktop-capture testing. |
+| **FreeBSD / OpenBSD** | Not Linux; no package or runtime testing. |
 
 Check your display session in a terminal:
 
