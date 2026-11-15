@@ -63,7 +63,8 @@ class OCRWindow(QWidget):
         note = QLabel('Offline OCR · Review and edit the result before copying, especially commands or code.')
         note.setWordWrap(True)
         root.addWidget(note)
-        options = QHBoxLayout()
+        self.options = QWidget(self)
+        options = QHBoxLayout(self.options)
         options.setSpacing(12)
         options.addWidget(QLabel('Language'))
         self.language = QComboBox()
@@ -78,7 +79,7 @@ class OCRWindow(QWidget):
         self.improve = QCheckBox('Improve small / dark text')
         self.improve.setChecked(True)
         options.addWidget(self.improve)
-        root.addLayout(options)
+        self.options.hide()
         self.result = QPlainTextEdit()
         self.result.setPlaceholderText('Recognized text appears here. You can edit it before copying or saving.')
         root.addWidget(self.result,1)
@@ -155,6 +156,10 @@ class OCRWindow(QWidget):
             return
         if self.stage == 'languages':
             available = set(text.splitlines()) | set(diagnostic.splitlines())
+            if self.language.currentData() == 'eng' and 'eng' in available and 'hin' in available:
+                self.language.setCurrentIndex(2)
+            elif self.language.currentData() == 'eng' and 'eng' not in available and 'hin' in available:
+                self.language.setCurrentIndex(1)
             missing = [lang for lang in self.language.currentData().split('+') if lang not in available]
             if missing:
                 self.finish('Missing language data. Install: sudo apt install '+' '.join('tesseract-ocr-'+lang for lang in missing)+'. Then Retry.')
