@@ -69,3 +69,24 @@ Installed package: `klip --capture`, `klip --settings`, `klip --background`,
 
 Login startup and desktop shortcuts contain absolute paths. Recreate them after
 moving the source/interpreter. They are per-user and need no administrator access.
+
+
+## Flatpak preview builds
+
+On a Linux host with Flatpak/flatpak-builder, add Flathub for the SDK/BaseApp:
+
+```sh
+flatpak remote-add --user --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+flatpak-builder --user --assumeyes --install-deps-from=flathub --force-clean --repo=flatpak-repo flatpak-build packaging/io.github.workwithmanish.klip.json
+flatpak build-bundle flatpak-repo klip_0.3.0_x86_64.flatpak io.github.workwithmanish.klip
+```
+
+Runtime/SDK/BaseApp and OCR dependencies require substantial download/build disk
+space. Sources and language data are pinned with SHA-256 checksums. No RPM is
+required to install the resulting bundle on Fedora. This is not a Flathub submission.
+
+Test screenshot consent/cancel, region selection, OCR, native Save/Copy, global
+shortcut permissions and manual fallback on actual GNOME/Wayland and KDE/Wayland.
+Protocol tests use a mock D-Bus backend; they do not validate a real compositor.
+Flatpak source code lives under `/app/share/klip`; the native package uses
+`/usr/share/klip`. Both identify as `io.github.workwithmanish.klip` for portals.

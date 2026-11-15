@@ -129,7 +129,7 @@ if Python/Qt/Tesseract run, but that does not mean their screen capture works.
 | CPU architecture | x86_64/amd64, ARM64/aarch64, ARM32, RISC-V | Only x86_64 has current manual/CI evidence. Others untested; dependencies must exist for that CPU. |
 | C library | glibc, musl | PySide6 wheel/native package availability differs; both are not automatically interchangeable. |
 | Native packages | DEB, RPM, Arch packages, APK, XBPS, Nix/Guix definitions | Klip currently provides a DEB build setup only. |
-| Cross-distro app delivery | Flatpak, Snap, AppImage | Delivery formats, **not kernel/distro families**. No Klip builds provided yet; sandbox/portal integration would need testing. |
+| Cross-distro app delivery | Flatpak, Snap, AppImage | Delivery formats, **not kernel/distro families**. A downloadable x86_64 Flatpak preview is provided in 0.3.0; Snap/AppImage builds are not provided. Desktop testing is still required. |
 | Source installation | Python + PySide6 + Tesseract | Avoids a specific installer format, but does not bypass Wayland or dependency limitations. |
 
 Reference documentation: [Debian](https://www.debian.org/intro/about),
@@ -152,7 +152,7 @@ Version **0.3.0** adds a downloadable Flatpak preview for **x86_64** Linux.
 It bundles Python/Qt, Tesseract and English/Hindi OCR data, avoiding distro-specific
 Python dependency installation. It is not an RPM and is not listed on Flathub.
 
-Download `klip_0.3.0_x86_64.flatpak` from the new pre-release when available.
+Download `klip_0.3.0_x86_64.flatpak` from the new pre-release from the release page.
 With Flatpak installed on your distro:
 
 ```bash
@@ -167,7 +167,7 @@ native version simultaneously while testing.
 
 **Wayland:** the desktop's Screenshot portal owns consent and selection. Its UI
 and region options may differ from Klip's X11 overlay. If the portal backend is
-missing or refuses a request, Klip reports the error; it does not bypass permissions.
+missing or refuses a request, Klip reports the error; it does not bypass permissions. The desktop backend may also save its own screenshot copy.
 Flatpak uses this capture path on X11 too.
 
 **Shortcuts:** Settings → Shortcuts → Configure desktop portal shortcuts. Your
@@ -199,7 +199,7 @@ launch Klip with `sudo`.
 | --- | --- | --- |
 | **A. Source installation** | Trying Klip today and getting updates | Yes |
 | **B. Local `.deb` package** | Installing an independent system application | Yes, build it first |
-| **C. Download a ready-made `.deb`** | Trying the older alpha | v0.1.0-alpha available; latest development version is 0.3.0 |
+| **C. Download a ready-made `.deb`** | Installing the current preview | v0.3.0-alpha; experimental portal capture |
 
 Do not combine A and B. If you already installed a development/shared-folder
 version, read [migration instructions](docs/DEVELOPMENT.md#migrate-from-the-shared-folder-development-setup)
@@ -274,18 +274,19 @@ sudo apt install ./dist/klip_0.3.0_all.deb
 The version/filename will change for future releases; use the name printed by
 the build command.
 
-### C. Download the published alpha
+### C. Download the current preview
 
-Visit [Releases](https://github.com/workwithmanish/klip/releases/tag/v0.1.0-alpha)
-and download `klip_0.1.0_all.deb`. In a terminal opened in the download folder:
+Visit [v0.3.0-alpha Releases](https://github.com/workwithmanish/klip/releases/tag/v0.3.0-alpha).
+Kali/Debian users download `klip_0.3.0_all.deb`. In a terminal opened in the download folder:
 
 ```bash
-sudo apt install ./klip_0.1.0_all.deb
+sudo apt install ./klip_0.3.0_all.deb
 ```
 
-This older release does **not** contain the newer OCR, logo, loading screen or
-light-theme changes. Use A or B for the latest version. Do not downgrade an
-existing 0.3.0 installation to the older alpha.
+Fedora and other Flatpak-capable x86_64 desktops should use the `.flatpak` bundle
+and instructions above. This is a compatibility **preview**, not a claim of
+verified support on all those desktops. Earlier release assets remain available
+for history but omit newer features.
 
 ## Use Klip: menu, shortcut, or terminal
 

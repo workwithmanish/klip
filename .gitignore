@@ -7,3 +7,8 @@ build/
 *.deb.sha256
 .pytest_cache/
 *.log
+
+.flatpak-builder/
+flatpak-build/
+flatpak-repo/
+release-assets/

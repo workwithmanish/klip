@@ -55,7 +55,8 @@ jobs:
             exit 1
           fi
           flatpak build --env=QT_QPA_PLATFORM=offscreen flatpak-build python3 -c "import sys; sys.path.insert(0,'/app/share/klip'); import klip, portals, ocr; from PySide6.QtWidgets import QApplication; from PySide6.QtGui import QImage; app=QApplication([]); editor=klip.Editor(QImage(640,480,QImage.Format.Format_RGB32)); print('Flatpak editor imports and creation passed')"
-          flatpak build flatpak-build tesseract --list-langs
+          flatpak build --env=QT_QPA_PLATFORM=offscreen --env=TESSDATA_PREFIX=/app/share/tessdata flatpak-build python3 -c "from PySide6.QtWidgets import QApplication; from PySide6.QtGui import QImage,QPainter,QColor,QFont; import subprocess; app=QApplication([]); image=QImage(640,120,QImage.Format.Format_RGB32); image.fill(QColor('white')); painter=QPainter(image); font=QFont('DejaVu Sans'); font.setPixelSize(36); painter.setFont(font); painter.setPen(QColor('black')); painter.drawText(20,70,'Klip OCR 12345'); painter.end(); path='/app/klip-ocr-smoke.png'; assert image.save(path); result=subprocess.run(['tesseract',path,'stdout','-l','eng','--psm','6'],capture_output=True,text=True,check=True); assert '12345' in result.stdout, result.stdout; print('Bundled OCR recognition passed')"
+          flatpak build --env=TESSDATA_PREFIX=/app/share/tessdata flatpak-build tesseract --list-langs
           mkdir -p dist
           flatpak build-bundle flatpak-repo dist/klip_0.3.0_x86_64.flatpak io.github.workwithmanish.klip
           cd dist
