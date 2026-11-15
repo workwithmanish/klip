@@ -38,6 +38,11 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/cache/restore@v4
+        with:
+          path: .flatpak-builder/cache
+          key: klip-flatpak-${{ runner.os }}-${{ hashFiles('packaging/io.github.workwithmanish.klip.json') }}
+          restore-keys: klip-flatpak-${{ runner.os }}-
       - name: Install Flatpak build tools
         run: |
           sudo apt-get update
@@ -55,6 +60,11 @@ jobs:
           flatpak build-bundle flatpak-repo dist/klip_0.3.0_x86_64.flatpak io.github.workwithmanish.klip
           cd dist
           sha256sum *.flatpak > klip_0.3.0_x86_64.flatpak.sha256
+      - uses: actions/cache/save@v4
+        if: always()
+        with:
+          path: .flatpak-builder/cache
+          key: klip-flatpak-${{ runner.os }}-${{ hashFiles('packaging/io.github.workwithmanish.klip.json') }}
       - uses: actions/upload-artifact@v4
         with:
           name: klip-development-flatpak
