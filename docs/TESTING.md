@@ -33,8 +33,8 @@ Do not describe those behaviours as fixed solely because offscreen checks pass.
 
 | Environment / check | Evidence | What is still unverified |
 | --- | --- | --- |
-| Kali Rolling, XFCE/X11, x86_64 | User manually tested capture/editor and fresh native installation during earlier 0.1/0.2 development | User reports current source works on Kali; complete 0.3.1 package regression pending |
-| Debian 13 CI | Earlier package checks passed; the release workflow reruns install/uninstall and the full current suite | Actual compositor, tray, multi-monitor and login session |
+| Kali Rolling, XFCE/X11, x86_64 | User reports current source works; 0.3.1 DEB upgrade, dpkg version and installed diagnostics verified on 2026-11-16 | Complete manual text/undo/capture regression on installed 0.3.1 still pending |
+| Debian 13 CI | 0.3.1 release workflow passed package build, install/uninstall and the full 27-test suite | Actual compositor, tray, multi-monitor and login session |
 | Screenshot portal protocol | Real temporary D-Bus connection with a mock service; success/cancel/denial tested | Real GNOME/KDE/compositor implementation and permission UI |
 | x86_64 Flatpak CI | Bundle built; editor creation, bundled Tesseract recognition and language-data checks passed | Interactive capture, permissions, file picker, clipboard and shortcuts on real desktops |
 | Fedora 44 GNOME/Wayland | Downloadable Flatpak preview provided | Friend/community desktop results pending |

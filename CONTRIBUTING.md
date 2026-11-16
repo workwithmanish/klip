@@ -1,6 +1,6 @@
 # Contributing
 
-Current release: **v0.3.0-alpha**. Read [README](README.md),
+Current release: **v0.3.1-alpha**. Read [README](README.md),
 [developer instructions](docs/DEVELOPMENT.md) and [testing status](docs/TESTING.md).
 
 Report your distro/version, CPU architecture, desktop, X11/Wayland,
