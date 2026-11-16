@@ -1,6 +1,10 @@
 # Changelog
 
-## Unreleased — development changes, 2026-11-16
+## 0.3.1-alpha — 2026-11-16
+
+- Fix portal diagnostics: InvalidArgs, access denial, empty replies and timeouts
+  report unknown rather than falsely declaring the feature unavailable.
+- Publish updated DEB and x86_64 Flatpak previews with text and full undo fixes.
 
 - Fix themed inline text rendering: dedicated font size in pixels, live font/color
   changes and matching export; remove the drawing-width-to-font multiplier.
@@ -20,8 +24,8 @@
 - Add tray Copy diagnostics, CLI `--diagnostics`, and Cancel pending capture.
 - Add regression checks for retained annotations, geometry, history and caching.
 
-The published 0.3.0-alpha installers are unchanged. GNOME/KDE Wayland and mixed-DPI
-desktop validation remain pending; these changes do not claim new platform support.
+GNOME/KDE Wayland and mixed-DPI desktop validation remain pending; this release
+does not claim new platform support. Download the new 0.3.1 artifacts for these fixes.
 
 ## 0.3.0-alpha — released 2026-11-15
 

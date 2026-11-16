@@ -5,20 +5,20 @@
 **Take a screenshot, draw on it, add text, and save or copy it.**
 Klip runs in the tray near your desktop clock. This project is in early development.
 
-**Current release: [v0.3.0-alpha](https://github.com/workwithmanish/klip/releases/tag/v0.3.0-alpha).**
+**Current release: [v0.3.1-alpha](https://github.com/workwithmanish/klip/releases/tag/v0.3.1-alpha).**
 
 | Want to install now? | Download |
 | --- | --- |
-| Kali / Debian 13 | `klip_0.3.0_all.deb` |
-| Fedora or another Flatpak-capable x86_64 Linux desktop | `klip_0.3.0_x86_64.flatpak` — experimental desktop-portal preview |
+| Kali / Debian 13 | `klip_0.3.1_all.deb` |
+| Fedora or another Flatpak-capable x86_64 Linux desktop | `klip_0.3.1_x86_64.flatpak` — experimental desktop-portal preview |
 
 Flatpak is cross-distro: it can also be tested on Kali. It is not Fedora-only.
 Choose one installation method and quit any old instance before switching.
 [Verified tests and remaining desktop checks](docs/TESTING.md).
 
-## Latest development improvements
+## What is new in 0.3.1
 
-These changes are on `main`; the downloadable v0.3.0-alpha release predates them.
+Included in v0.3.1-alpha:
 
 - Pen strokes and text stay editable. Choose **Select** to move, resize, recolor
   or delete them. **Double-click a text annotation** to change its words;
@@ -46,6 +46,10 @@ python3 klip.py --check-desktop
 # Flatpak, after installing a build containing these changes:
 flatpak run io.github.workwithmanish.klip --diagnostics
 ```
+
+Query errors such as `InvalidArgs` report `status: "unknown"` and `available: null`,
+not confirmed unsupported. A missing portal service reports unavailable. Native X11
+capture does not require these portal interfaces.
 
 Diagnostics contain no screenshot or personal file paths. Advertised capabilities
 do not certify that a real permission/capture flow works. On newer screenshot
@@ -75,7 +79,7 @@ on Ubuntu, Mint, or Kali. Versions and available dependencies also matter.
 
 ## Who is Klip for right now?
 
-**Klip targets desktop Linux: native X11 capture plus experimental Wayland portal capture in 0.3.0.** Kali/XFCE/X11 is manually
+**Klip targets desktop Linux: native X11 capture plus experimental Wayland portal capture in 0.3.1.** Kali/XFCE/X11 is manually
 tested; Debian 13 package/editor/OCR checks pass. Everything else below is
 classified for clarity, not claimed as supported.
 
@@ -126,7 +130,7 @@ systems, vendor forks, experimental kernels and embedded products are open-ended
 | Debian-derived / alternative init | Devuan | DEB · APT/dpkg | Untested; no systemd assumption is sufficient to establish support. |
 | **Ubuntu** (Debian-derived) | Ubuntu, Kubuntu, Xubuntu, Lubuntu, Ubuntu MATE | DEB · APT/dpkg | Untested; desktop/session and available PySide6 version vary. |
 | Ubuntu-derived | Linux Mint Ubuntu edition, Pop!_OS, Zorin OS, elementary OS, KDE neon | DEB · APT/dpkg | Untested. Debian ancestry does not guarantee package compatibility. |
-| **Fedora** | Fedora Workstation, Server, desktop Spins | RPM · DNF | No RPM yet. **Use the 0.3.0 Flatpak preview for Fedora 44 GNOME/Wayland testing.** Real desktop verification pending. |
+| **Fedora** | Fedora Workstation, Server, desktop Spins | RPM · DNF | No RPM yet. **Use the 0.3.1 Flatpak preview for Fedora 44 GNOME/Wayland testing.** Real desktop verification pending. |
 | Fedora image-based variants | Silverblue, Kinoite, other Fedora Atomic Desktops | Image deployments; rpm-ostree/variant-specific tooling | Untested; ordinary DNF installation instructions do not apply universally. |
 | **RHEL ecosystem** | RHEL, CentOS Stream, Rocky Linux, AlmaLinux, Oracle Linux | RPM · DNF and platform-specific tooling | No Klip RPM; untested. Python/Qt availability varies by release. |
 | **SUSE ecosystem** | openSUSE Leap, Tumbleweed; SUSE Linux Enterprise | RPM · Zypper | No Klip RPM; untested. Fedora RPMs are not automatically compatible. |
@@ -162,7 +166,7 @@ Only the Kali and Debian rows above carry actual verification claims.
 | KDE Plasma | X11, where available | Untested; manual desktop shortcut setup. |
 | Cinnamon / MATE / LXQt / LXDE | X11 | Untested; manual desktop shortcut setup. |
 | Standalone window managers, e.g. i3/Openbox | X11 | Untested; tray availability and shortcut setup vary. |
-| **GNOME / KDE / XFCE / any desktop** | **Wayland** | **Experimental screenshot/OCR via the desktop portal in 0.3.0.** Requires a working Screenshot backend and permission. Not manually verified on GNOME/KDE yet. |
+| **GNOME / KDE / XFCE / any desktop** | **Wayland** | **Experimental screenshot/OCR via the desktop portal in 0.3.1.** Requires a working Screenshot backend and permission. Not manually verified on GNOME/KDE yet. |
 | Wayland compositors, e.g. Sway/Hyprland | Wayland | Experimental portal path; depends on compositor backend support. Not tested. |
 | Remote desktop / nested sessions | X11 or Wayland | Untested; screenshot and shortcut permissions are session-dependent. |
 | Headless server / console / container without a desktop | No graphical session | No supported interactive capture workflow. |
@@ -177,7 +181,7 @@ if Python/Qt/Tesseract run, but that does not mean their screen capture works.
 | CPU architecture | x86_64/amd64, ARM64/aarch64, ARM32, RISC-V | Only x86_64 has current manual/CI evidence. Others untested; dependencies must exist for that CPU. |
 | C library | glibc, musl | PySide6 wheel/native package availability differs; both are not automatically interchangeable. |
 | Native packages | DEB, RPM, Arch packages, APK, XBPS, Nix/Guix definitions | Klip currently provides a DEB build setup only. |
-| Cross-distro app delivery | Flatpak, Snap, AppImage | Delivery formats, **not kernel/distro families**. A downloadable x86_64 Flatpak preview is provided in 0.3.0; Snap/AppImage builds are not provided. Desktop testing is still required. |
+| Cross-distro app delivery | Flatpak, Snap, AppImage | Delivery formats, **not kernel/distro families**. A downloadable x86_64 Flatpak preview is provided in 0.3.1; Snap/AppImage builds are not provided. Desktop testing is still required. |
 | Source installation | Python + PySide6 + Tesseract | Avoids a specific installer format, but does not bypass Wayland or dependency limitations. |
 
 Reference documentation: [Debian](https://www.debian.org/intro/about),
@@ -192,20 +196,20 @@ Check your display session in a terminal:
 echo "$XDG_SESSION_TYPE"
 ```
 
-**`x11`** → native capture. **`wayland`** → use version 0.3.0 portal preview; your desktop will ask permission and handle selection. Earlier releases do not support Wayland capture.
+**`x11`** → native capture. **`wayland`** → use version 0.3.1 portal preview; your desktop will ask permission and handle selection. Versions before 0.3.0 do not support Wayland capture.
 
 ## Cross-distro preview: Flatpak (Fedora / GNOME / KDE)
 
-Version **0.3.0** adds a downloadable Flatpak preview for **x86_64** Linux.
+Version **0.3.1** provides a downloadable Flatpak preview for **x86_64** Linux.
 It bundles Python/Qt, Tesseract and English/Hindi OCR data, avoiding distro-specific
 Python dependency installation. It is not an RPM and is not listed on Flathub.
 
-Download `klip_0.3.0_x86_64.flatpak` from the new pre-release from the release page.
+Download `klip_0.3.1_x86_64.flatpak` from the new pre-release from the release page.
 With Flatpak installed on your distro:
 
 ```bash
 flatpak remote-add --user --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
-flatpak install --user ./klip_0.3.0_x86_64.flatpak
+flatpak install --user ./klip_0.3.1_x86_64.flatpak
 flatpak run io.github.workwithmanish.klip
 ```
 
@@ -247,7 +251,7 @@ launch Klip with `sudo`.
 | --- | --- | --- |
 | **A. Source installation** | Trying Klip today and getting updates | Yes |
 | **B. Local `.deb` package** | Installing an independent system application | Yes, build it first |
-| **C. Download a ready-made `.deb`** | Installing the current preview | v0.3.0-alpha; experimental portal capture |
+| **C. Download a ready-made `.deb`** | Installing the current preview | v0.3.1-alpha; experimental portal capture |
 
 Do not combine A and B. If you already installed a development/shared-folder
 version, read [migration instructions](docs/DEVELOPMENT.md#migrate-from-the-shared-folder-development-setup)
@@ -291,7 +295,7 @@ A **`.deb` is an installation package** used by Debian and related systems.
 This method installs Klip as a system application; it does not need a source
 folder or a Python virtual environment afterward.
 
-For the latest development version (0.3.0), build the package locally:
+For the latest development version (0.3.1), build the package locally:
 
 ```bash
 sudo apt update
@@ -299,7 +303,7 @@ sudo apt install -y git python3
 git clone https://github.com/workwithmanish/klip.git "$HOME/klip-build"
 cd "$HOME/klip-build"
 python3 packaging/build_deb.py
-sudo apt install ./dist/klip_0.3.0_all.deb
+sudo apt install ./dist/klip_0.3.1_all.deb
 ```
 
 Use a different unused folder name if `~/klip-build` already exists. APT installs
@@ -316,7 +320,7 @@ For a later update, quit Klip and repeat the build/install from your build check
 cd "$HOME/klip-build"
 git pull --ff-only
 python3 packaging/build_deb.py
-sudo apt install ./dist/klip_0.3.0_all.deb
+sudo apt install ./dist/klip_0.3.1_all.deb
 ```
 
 The version/filename will change for future releases; use the name printed by
@@ -324,11 +328,11 @@ the build command.
 
 ### C. Download the current preview
 
-Visit [v0.3.0-alpha Releases](https://github.com/workwithmanish/klip/releases/tag/v0.3.0-alpha).
-Kali/Debian users download `klip_0.3.0_all.deb`. In a terminal opened in the download folder:
+Visit [v0.3.1-alpha Releases](https://github.com/workwithmanish/klip/releases/tag/v0.3.1-alpha).
+Kali/Debian users download `klip_0.3.1_all.deb`. In a terminal opened in the download folder:
 
 ```bash
-sudo apt install ./klip_0.3.0_all.deb
+sudo apt install ./klip_0.3.1_all.deb
 ```
 
 Fedora and other Flatpak-capable x86_64 desktops should use the `.flatpak` bundle
@@ -376,7 +380,7 @@ in your desktop's keyboard settings. Portal shortcuts require Klip to stay runni
 
 ### Extract text from a screenshot (OCR)
 
-In v0.3.0-alpha, choose **tray → Capture text (OCR)** and
+In v0.3.1-alpha, choose **tray → Capture text (OCR)** and
 select an area. Or click **Extract text (OCR)** in the image editor. Recognition
 runs locally; the editor timestamp watermark is excluded.
 

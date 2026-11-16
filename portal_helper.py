@@ -14,6 +14,16 @@ def emit(**data):
     print(json.dumps(data), flush=True)
 
 
+def capability_error(error):
+    # InvalidArgs, access denial and timeouts describe a failed query, not support.
+    absent = error in ('org.freedesktop.DBus.Error.ServiceUnknown',
+                       'org.freedesktop.DBus.Error.NameHasNoOwner')
+    return {'available': False if absent else None,
+            'status': 'unavailable' if absent else 'unknown', 'error': error,
+            'message': 'Desktop portal service is unavailable.' if absent else
+                       'Capability query failed; desktop support could not be determined.'}
+
+
 async def portal_properties(bus, interface):
     """Inspect advertised support without requesting screenshot permission."""
     from dbus_next import Message, MessageType
@@ -22,11 +32,13 @@ async def portal_properties(bus, interface):
             interface='org.freedesktop.DBus.Properties', member='GetAll',
             signature='s', body=[interface])), 3)
         if reply.message_type == MessageType.ERROR:
-            return {'available': False, 'error': reply.error_name}
+            return capability_error(reply.error_name)
         values = {key: value.value for key, value in reply.body[0].items()}
-        return {'available': bool(values), **values}
+        supported = type(values.get('version')) is int and values['version'] >= 1
+        return {**values, 'available': True if supported else None,
+                'status': 'available' if supported else 'unknown'}
     except asyncio.TimeoutError:
-        return {'available': False, 'error': 'Portal capability check timed out'}
+        return capability_error('Portal capability check timed out')
 
 
 def screenshot_options(capabilities, variant):

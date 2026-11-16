@@ -1,7 +1,7 @@
-# Klip v0.3.0-alpha
+# Klip v0.3.1-alpha
 
-[Published release](https://github.com/workwithmanish/klip/releases/tag/v0.3.0-alpha).
-Installer/app version: 0.3.0. Linux compatibility preview: X11 capture plus experimental desktop-portal capture
+[Published release](https://github.com/workwithmanish/klip/releases/tag/v0.3.1-alpha).
+Installer/app version: 0.3.1. Linux compatibility preview: X11 capture plus experimental desktop-portal capture
 on Wayland, with a cross-distribution Flatpak build.
 
 ## Download and install
@@ -13,19 +13,27 @@ on Wayland, with a cross-distribution Flatpak build.
 
 ```sh
 flatpak remote-add --user --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
-flatpak install --user ./klip_0.3.0_x86_64.flatpak
+flatpak install --user ./klip_0.3.1_x86_64.flatpak
 flatpak run io.github.workwithmanish.klip
 ```
 
 **Kali / Debian 13:**
 
 ```sh
-sudo apt install ./klip_0.3.0_all.deb
+sudo apt install ./klip_0.3.1_all.deb
 ```
 
 Quit any old running instance before updating. Choose one installation method.
 
-## What's included
+## What is fixed
+
+- Text font size and color match during editing and after applying. Text has an independent pixel-size control.
+- All annotation edits can be undone back to the original capture; timestamp changes participate in Undo/Redo.
+- Pen/text remain editable; hover selection, layering and render caching are improved.
+- Desktop capability checks distinguish unknown query failures from confirmed missing services. InvalidArgs is not an unsupported-system result.
+- Run `klip --check-desktop` to inspect advertised portal support without taking a screenshot.
+
+## What is included
 
 - Permission-based screenshot portal capture on Wayland; native X11 capture retained.
 - Desktop portal global shortcuts with manual desktop-keyboard fallback.
@@ -51,3 +59,19 @@ Quit any other installed Klip instance first. Download/install newer bundles man
 there is no automatic Klip update repository yet. Both assets include SHA-256 files;
 run `sha256sum -c <downloaded-filename>.sha256` in their download folder to verify.
 For the current evidence and pending checks, see [Testing status](https://github.com/workwithmanish/klip/blob/main/docs/TESTING.md).
+
+## Fedora GNOME / KDE tester checklist
+
+Use the Flatpak asset above. This is a preview, not a verified compatibility claim.
+
+1. Quit any old Klip instance, install the new bundle, and open Klip.
+2. Run `flatpak run io.github.workwithmanish.klip --check-desktop` and keep its output.
+3. Capture an area; also try cancelling/denying desktop permission and then retrying.
+4. Add text at 26 px, apply/re-edit it, then draw and move/resize annotations.
+5. Undo back to the original screenshot and redo the edits.
+6. Copy and paste into a browser and another application; save through the file chooser.
+7. Extract text with OCR, then test shortcut permission/activation and quit/relaunch.
+
+Report desktop/session versions and which steps passed/failed through GitHub Issues.
+`unknown` in diagnostics means the query did not establish support; a successful
+property query alone also does not prove the real capture workflow works.

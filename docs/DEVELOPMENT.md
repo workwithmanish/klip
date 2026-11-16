@@ -22,18 +22,18 @@ The package builder needs only Python's standard library. It bundles original
 Python source/PNG/SVG assets and declares distro Python/Qt/OCR/portal dependencies. It does not
 vendor Qt or download/install dependencies during the build.
 
-The `all` in `klip_0.3.0_all.deb` means the package source is architecture-independent;
+The `all` in `klip_0.3.1_all.deb` means the package source is architecture-independent;
 native Qt packages must still be available for the target CPU and OS. Debian 13
 CI checks installation, offscreen tests and removal. Real tray, X11 capture,
 shortcuts and startup still require manual desktop checks (CONTRIBUTING.md).
 
 ## Install an experimental .deb
 
-The current release is [v0.3.0-alpha](https://github.com/workwithmanish/klip/releases/tag/v0.3.0-alpha).
+The current release is [v0.3.1-alpha](https://github.com/workwithmanish/klip/releases/tag/v0.3.1-alpha).
 Its `.deb` can be downloaded directly; developers can build from a checkout, then:
 
 ```bash
-sudo apt install ./dist/klip_0.3.0_all.deb
+sudo apt install ./dist/klip_0.3.1_all.deb
 ```
 
 APT gets requirements from your configured repositories. Do not mix distro
@@ -112,9 +112,8 @@ parent export remains unimplemented and real GNOME validation is still pending.
 References: [Screenshot portal](https://flatpak.github.io/xdg-desktop-portal/docs/doc-org.freedesktop.portal.Screenshot.html),
 [GlobalShortcuts portal](https://flatpak.github.io/xdg-desktop-portal/docs/doc-org.freedesktop.portal.GlobalShortcuts.html).
 
-These improvements are unreleased. Do not reuse the existing release tag or imply
-that its downloadable artifacts contain them. Bump the package/app version and
-release metadata together before publishing a new installer.
+These improvements are included in 0.3.1-alpha. Do not reuse an existing release
+tag when publishing fixes; update app/package metadata and publish a new version.
 
 Login startup and desktop shortcuts contain absolute paths. Recreate them after
 moving the source/interpreter. They are per-user and need no administrator access.
@@ -127,7 +126,7 @@ On a Linux host with Flatpak/flatpak-builder, add Flathub for the SDK/BaseApp:
 ```sh
 flatpak remote-add --user --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
 flatpak-builder --user --assumeyes --install-deps-from=flathub --force-clean --repo=flatpak-repo flatpak-build packaging/io.github.workwithmanish.klip.json
-flatpak build-bundle flatpak-repo klip_0.3.0_x86_64.flatpak io.github.workwithmanish.klip
+flatpak build-bundle flatpak-repo klip_0.3.1_x86_64.flatpak io.github.workwithmanish.klip
 ```
 
 Runtime/SDK/BaseApp and OCR dependencies require substantial download/build disk
@@ -148,3 +147,8 @@ jobs succeed. Update app/build version, workflow filenames, AppStream metadata,
 release notes and user instructions together when preparing a new version.
 Never replace an existing release tag to hide a fix; publish a new version.
 See [TESTING.md](TESTING.md) for what automated success does and does not establish.
+
+Capability diagnostics use three states: available (`true`, a valid advertised
+version), unavailable (`false`, a missing service), and unknown (`null`, query
+failure or missing version). InvalidArgs/AccessDenied/timeout do not prove lack of
+support. Capture options still use only advertised version/target data.

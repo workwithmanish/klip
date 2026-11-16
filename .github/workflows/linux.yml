@@ -16,12 +16,12 @@ jobs:
       - name: Build and inspect package
         run: |
           python3 packaging/build_deb.py
-          dpkg-deb --info dist/klip_0.3.0_all.deb
-          dpkg-deb --contents dist/klip_0.3.0_all.deb
+          dpkg-deb --info dist/klip_0.3.1_all.deb
+          dpkg-deb --contents dist/klip_0.3.1_all.deb
           desktop-file-validate packaging/klip.desktop
       - name: Install package and test installed modules
         run: |
-          if ! apt-get install -y ./dist/klip_0.3.0_all.deb python3-pyside6.qttest fonts-dejavu-core tesseract-ocr-hin > /tmp/klip-install.log 2>&1; then
+          if ! apt-get install -y ./dist/klip_0.3.1_all.deb python3-pyside6.qttest fonts-dejavu-core tesseract-ocr-hin > /tmp/klip-install.log 2>&1; then
             grep -Ei 'error|unable|dpkg:|E:|klip' /tmp/klip-install.log | tail -n 8 | while IFS= read -r line; do printf '::error::%s\n' "$line"; done
             exit 1
           fi
@@ -58,9 +58,9 @@ jobs:
           flatpak build --env=QT_QPA_PLATFORM=offscreen --env=TESSDATA_PREFIX=/app/share/tessdata flatpak-build python3 -c "from PySide6.QtWidgets import QApplication; from PySide6.QtGui import QImage,QPainter,QColor,QFont; import subprocess; app=QApplication([]); image=QImage(640,120,QImage.Format.Format_RGB32); image.fill(QColor('white')); painter=QPainter(image); font=QFont('DejaVu Sans'); font.setPixelSize(36); painter.setFont(font); painter.setPen(QColor('black')); painter.drawText(20,70,'Klip OCR 12345'); painter.end(); path='/app/klip-ocr-smoke.png'; assert image.save(path); result=subprocess.run(['tesseract',path,'stdout','-l','eng','--psm','6'],capture_output=True,text=True,check=True); assert '12345' in result.stdout, result.stdout; print('Bundled OCR recognition passed')"
           flatpak build --env=TESSDATA_PREFIX=/app/share/tessdata flatpak-build tesseract --list-langs
           mkdir -p dist
-          flatpak build-bundle flatpak-repo dist/klip_0.3.0_x86_64.flatpak io.github.workwithmanish.klip
+          flatpak build-bundle flatpak-repo dist/klip_0.3.1_x86_64.flatpak io.github.workwithmanish.klip
           cd dist
-          sha256sum *.flatpak > klip_0.3.0_x86_64.flatpak.sha256
+          sha256sum *.flatpak > klip_0.3.1_x86_64.flatpak.sha256
       - uses: actions/cache/save@v4
         if: always()
         with:

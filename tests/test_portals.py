@@ -12,6 +12,20 @@ from portals import image_from_uri,use_capture_portal
 
 
 class PortalImageTests(unittest.TestCase):
+    def test_query_errors_are_unknown_instead_of_unsupported(self):
+        from portal_helper import capability_error
+        for error in ('org.freedesktop.DBus.Error.InvalidArgs',
+                      'org.freedesktop.DBus.Error.AccessDenied',
+                      'org.freedesktop.DBus.Error.UnknownInterface',
+                      'Portal capability check timed out'):
+            result = capability_error(error)
+            self.assertIsNone(result['available'])
+            self.assertEqual(result['status'], 'unknown')
+            self.assertEqual(result['error'], error)
+        result = capability_error('org.freedesktop.DBus.Error.ServiceUnknown')
+        self.assertFalse(result['available'])
+        self.assertEqual(result['status'], 'unavailable')
+
     def test_local_uri_and_reject_remote(self):
         with tempfile.TemporaryDirectory() as folder:
             path=Path(folder)/'screen with spaces.png'
@@ -35,6 +49,29 @@ class PortalImageTests(unittest.TestCase):
         self.assertNotIn('target', screenshot_options({'version':2}, variant))
         self.assertEqual(screenshot_options({'version':3, 'AvailableTargets':5}, variant)['target'], 4)
         self.assertNotIn('target', screenshot_options({'version':3, 'AvailableTargets':1}, variant))
+
+
+class CapabilityQueryTests(unittest.IsolatedAsyncioTestCase):
+    async def test_probe_error_empty_success_and_timeout(self):
+        import asyncio
+        from types import SimpleNamespace
+        from unittest.mock import AsyncMock
+        from dbus_next import MessageType, Variant
+        from portal_helper import portal_properties
+        bus = SimpleNamespace(call=AsyncMock(return_value=SimpleNamespace(
+            message_type=MessageType.ERROR, error_name='org.freedesktop.DBus.Error.InvalidArgs')))
+        result = await portal_properties(bus, 'org.freedesktop.portal.Screenshot')
+        self.assertIsNone(result['available'])
+        self.assertEqual(result['status'], 'unknown')
+        bus.call.return_value = SimpleNamespace(message_type=MessageType.METHOD_RETURN, body=[{}])
+        self.assertIsNone((await portal_properties(bus, 'test'))['available'])
+        bus.call.return_value.body = [{'version': Variant('u', 3), 'AvailableTargets': Variant('u', 5)}]
+        result = await portal_properties(bus, 'test')
+        self.assertTrue(result['available'])
+        self.assertEqual(result['status'], 'available')
+        self.assertEqual(result['AvailableTargets'], 5)
+        bus.call.side_effect = asyncio.TimeoutError
+        self.assertIsNone((await portal_properties(bus, 'test'))['available'])
 
 
 @unittest.skipUnless(os.environ.get('DBUS_SESSION_BUS_ADDRESS'),'Requires a temporary session bus')

@@ -1,11 +1,11 @@
-# Testing status — v0.3.0-alpha
+# Testing status — v0.3.1-alpha
 
-Released 2026-11-15. Installer/app version: 0.3.0.
+Release date: 2026-11-16. Installer/app version: 0.3.1.
 
-## Development main — 2026-11-16
+## Release checks — 2026-11-16
 
-The annotation and diagnostics improvements on `main` are not in the published
-0.3.0-alpha assets. Local Windows offscreen checks: 25 tests, 23 passed and 2
+This release includes the annotation and diagnostics improvements.
+Local Windows offscreen checks: 27 tests, 25 passed and 2
 skipped because Tesseract and a Linux session bus are unavailable. These checks
 cover editable pen/text, text re-edit cancel/apply, shape hit testing, stacking,
 pixelation undo, render-cache invalidation and selection without a spurious undo.
@@ -33,8 +33,8 @@ Do not describe those behaviours as fixed solely because offscreen checks pass.
 
 | Environment / check | Evidence | What is still unverified |
 | --- | --- | --- |
-| Kali Rolling, XFCE/X11, x86_64 | User manually tested capture/editor and fresh native installation during earlier 0.1/0.2 development | Full manual regression on 0.3.0 is not yet reported |
-| Debian 13 CI | Package build, install/uninstall and 13 tests passed | Actual compositor, tray, multi-monitor and login session |
+| Kali Rolling, XFCE/X11, x86_64 | User manually tested capture/editor and fresh native installation during earlier 0.1/0.2 development | User reports current source works on Kali; complete 0.3.1 package regression pending |
+| Debian 13 CI | Earlier package checks passed; the release workflow reruns install/uninstall and the full current suite | Actual compositor, tray, multi-monitor and login session |
 | Screenshot portal protocol | Real temporary D-Bus connection with a mock service; success/cancel/denial tested | Real GNOME/KDE/compositor implementation and permission UI |
 | x86_64 Flatpak CI | Bundle built; editor creation, bundled Tesseract recognition and language-data checks passed | Interactive capture, permissions, file picker, clipboard and shortcuts on real desktops |
 | Fedora 44 GNOME/Wayland | Downloadable Flatpak preview provided | Friend/community desktop results pending |
@@ -44,7 +44,7 @@ Do not describe those behaviours as fixed solely because offscreen checks pass.
 ## Quick tester checklist
 
 Quit any native/source/Flatpak Klip instance before changing installation method.
-Install the matching asset from [v0.3.0-alpha](https://github.com/workwithmanish/klip/releases/tag/v0.3.0-alpha).
+Install the matching asset from [v0.3.1-alpha](https://github.com/workwithmanish/klip/releases/tag/v0.3.1-alpha).
 
 1. Open the control panel and start capture.
 2. On Wayland/Flatpak, accept the desktop permission request and capture an area
@@ -58,3 +58,6 @@ Install the matching asset from [v0.3.0-alpha](https://github.com/workwithmanish
 Report distro version, desktop version, `echo "$XDG_SESSION_TYPE"`, CPU (`uname -m`),
 installation method and exact errors through [Issues](https://github.com/workwithmanish/klip/issues).
 State which steps passed/failed instead of reporting only “works.”
+
+For diagnostics, an InvalidArgs query must report `available: null` and
+`status: "unknown"`; it must not label a functioning native X11 setup unsupported.
