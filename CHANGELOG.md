@@ -2,12 +2,21 @@
 
 ## Unreleased — development changes, 2026-11-16
 
+- Fix themed inline text rendering: dedicated font size in pixels, live font/color
+  changes and matching export; remove the drawing-width-to-font multiplier.
+- Replace the 30-entry snapshot cutoff with per-edit annotation changes. Undo can
+  reach the unedited capture and redo every retained edit, including timestamp changes.
+- Inspect screenshot/shortcut portal capabilities via tray diagnostics and
+  `--check-desktop`; negotiate interactive/area options by advertised interface
+  version and targets. Detect Wayland even without XDG_SESSION_TYPE; pass real
+  X11 parent identifiers when available, without inventing Wayland handles.
+
 - Keep pen strokes and committed text as selectable annotations, with text re-editing
   on double-click, move/resize, color changes, deletion and undo/redo.
 - Match hover/click selection to stroke geometry; preserve chronological layering.
 - Keep pixelation in the annotation stack and recompute it when moved/resized.
-- Cache composed images during pointer movement and share immutable screenshot
-  pixels across bounded undo snapshots. Simple selection no longer adds an undo step.
+- Cache composed images during pointer movement and retain the immutable capture.
+  Simple selection no longer adds an undo step.
 - Add tray Copy diagnostics, CLI `--diagnostics`, and Cancel pending capture.
 - Add regression checks for retained annotations, geometry, history and caching.
 

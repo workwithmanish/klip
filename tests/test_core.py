@@ -78,6 +78,26 @@ class EditorTests(unittest.TestCase):
     def test_xfce_key_normalization(self):
         self.assertEqual(normalize_binding(xfce_key('Ctrl+Alt+K')), normalize_binding('<Alt><Primary>k'))
 
+    def test_text_size_is_independent_and_watermark_undo_reaches_capture(self):
+        self.editor.select_tool('Text')
+        self.assertEqual(self.editor.width_control.suffix(), ' px')
+        self.editor.width_control.setValue(26)
+        self.assertEqual(self.editor.canvas.text_size, 26)
+        self.editor.select_tool('Pen')
+        self.assertEqual(self.editor.width_control.value(), 4)
+        self.editor.watermark_toggle.setChecked(True)
+        self.editor.watermark_font.setValue(20)
+        self.editor.watermark_alpha.setValue(80)
+        marked = self.editor.canvas.export_image()
+        for _ in range(3):
+            self.editor.canvas.undo()
+        self.assertEqual(self.editor.canvas.export_image(), self.image)
+        self.assertFalse(self.editor.watermark_toggle.isChecked())
+        for _ in range(3):
+            self.editor.canvas.redo()
+        self.assertEqual(self.editor.canvas.export_image(), marked)
+        self.assertTrue(self.editor.watermark_toggle.isChecked())
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -4,11 +4,23 @@ import os
 import sys
 from pathlib import Path
 from PySide6.QtCore import QObject,QProcess,Signal,QUrl
-from PySide6.QtGui import QImage
+from PySide6.QtGui import QImage, QGuiApplication
 
 
 def use_capture_portal():
-    return os.environ.get('XDG_SESSION_TYPE','').lower() == 'wayland' or Path('/.flatpak-info').exists()
+    if Path('/.flatpak-info').exists():
+        return True
+    if QGuiApplication.instance() and QGuiApplication.platformName().startswith('wayland'):
+        return True
+    session = os.environ.get('XDG_SESSION_TYPE', '').lower()
+    return session == 'wayland' or (not session and bool(os.environ.get('WAYLAND_DISPLAY')))
+
+
+def parent_window_identifier(window):
+    if window is not None and QGuiApplication.platformName() == 'xcb':
+        return 'x11:'+format(int(window.winId()), 'x')
+    # A Wayland handle must be exported by the compositor; never invent one.
+    return ''
 
 
 def image_from_uri(uri):
@@ -28,6 +40,7 @@ class PortalClient(QObject):
     shortcut_ready = Signal()
     activated = Signal(str)
     stopped = Signal()
+    capabilities_ready = Signal(dict)
 
     def __init__(self,parent=None):
         super().__init__(parent)
@@ -67,6 +80,8 @@ class PortalClient(QObject):
                     self.shortcut_ready.emit()
                 elif event == 'activated':
                     self.activated.emit(data['action'])
+                elif event == 'capabilities':
+                    self.capabilities_ready.emit({key: data.get(key, {}) for key in ('screenshot', 'shortcuts')})
             except (ValueError,KeyError) as error:
                 self.error.emit(str(error))
 

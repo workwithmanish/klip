@@ -76,8 +76,9 @@ Flatpak: prefix arguments with `flatpak run io.github.workwithmanish.klip`.
 
 Development `main` also supports `klip --diagnostics` (or `python3 klip.py
 --diagnostics` from source). This prints a small JSON environment report without
-starting QApplication or requesting screenshot access. Tray Copy diagnostics gives
-the same report. Portal capabilities are explicitly marked as not probed.
+starting QApplication or requesting screenshot access. That static command marks
+portal capabilities as not probed; Tray Copy diagnostics and `--check-desktop`
+also inspect the desktop's advertised interface properties on Linux.
 
 ## Annotation model on development main
 
@@ -89,10 +90,27 @@ mode to reopen it. Pixelation samples preceding layers at its current bounds.
 
 Hover and click selection share path-based geometry with a small stroke tolerance.
 Unfilled shape interiors are not selectable. Text boxes and filled regions are.
-Undo retains up to 30 snapshots of annotation data and implicitly shared immutable
-QImages; this is bounded snapshot history, not a minimal-delta command system.
 Document changes invalidate a composed-image cache; cursor guides do not. Watermark
 settings and inline edit visibility participate in the cache key.
+
+Current history stores splice commands (changed annotation ranges plus old/new
+timestamp settings), not full snapshots or a fixed 30-entry list. A temporary
+before-state is converted to a small change at the next edit/undo. The original
+capture is immutable, and all annotation edits can be undone back to it. Text uses
+an independent pixel size and the same explicit document font/margins for inline
+editing and export, preventing global widget styles from changing its font size.
+
+`python3 klip.py --check-desktop` queries Screenshot and GlobalShortcuts properties
+without taking a screenshot or binding a shortcut. Tray Copy diagnostics performs
+that query asynchronously. Screenshot options are version-gated: interactive from
+version 2, and an explicit area target from version 3 only if AvailableTargets
+includes Area. If capability inspection fails, the existing request path can still
+report the actual backend error rather than treating an inspection failure as
+proof of unsupported capture. X11 parent IDs are passed when available; Wayland
+parent export remains unimplemented and real GNOME validation is still pending.
+
+References: [Screenshot portal](https://flatpak.github.io/xdg-desktop-portal/docs/doc-org.freedesktop.portal.Screenshot.html),
+[GlobalShortcuts portal](https://flatpak.github.io/xdg-desktop-portal/docs/doc-org.freedesktop.portal.GlobalShortcuts.html).
 
 These improvements are unreleased. Do not reuse the existing release tag or imply
 that its downloadable artifacts contain them. Bump the package/app version and

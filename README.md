@@ -23,12 +23,16 @@ These changes are on `main`; the downloadable v0.3.0-alpha release predates them
 - Pen strokes and text stay editable. Choose **Select** to move, resize, recolor
   or delete them. **Double-click a text annotation** to change its words;
   Enter applies, Shift+Enter adds a line and Esc cancels that edit.
+- Text has its own **Text … px** control. Its font/color match while typing and
+  after applying; pen thickness is a separate setting.
 - Hover glow and selection follow visible strokes instead of empty bounding boxes.
 - Annotations keep their drawing order. Pixelation can be moved/resized and applies
   to the content underneath at its new position. Pixelation is not secure redaction.
-- Pointer movement reuses the rendered image, and undo snapshots share the unchanged
-  screenshot instead of copying its pixels for every edit.
-- Tray **Copy diagnostics** copies environment information for a bug report.
+- Pointer movement reuses the rendered image. Undo stores changed annotations, with
+  no 30-edit cutoff: keep undoing to return to the original capture. Timestamp
+  changes are undoable too; Redo restores the edits in order.
+- Tray **Copy diagnostics** checks advertised screenshot/shortcut portal support
+  and copies it with environment information for a bug report. No screenshot is taken.
   Use **Cancel pending capture** to stop waiting for a desktop portal request.
 
 To print diagnostics without opening a window:
@@ -37,12 +41,17 @@ To print diagnostics without opening a window:
 klip --diagnostics
 # From a source checkout:
 python3 klip.py --diagnostics
+# Check the desktop's advertised portal capabilities too (Linux):
+python3 klip.py --check-desktop
 # Flatpak, after installing a build containing these changes:
 flatpak run io.github.workwithmanish.klip --diagnostics
 ```
 
-Diagnostics contain no screenshot or personal file paths. They describe the
-environment; they do not certify that a desktop portal or compositor works.
+Diagnostics contain no screenshot or personal file paths. Advertised capabilities
+do not certify that a real permission/capture flow works. On newer screenshot
+portals Klip requests an area target only when the desktop advertises it; older
+portals keep their supported interaction. Linux distributions can use the same
+editor, with native X11 capture or the desktop portal for Wayland/Flatpak.
 
 ## Linux, Debian, Ubuntu, Kali… what is the difference?
 

@@ -5,7 +5,7 @@ Released 2026-11-15. Installer/app version: 0.3.0.
 ## Development main — 2026-11-16
 
 The annotation and diagnostics improvements on `main` are not in the published
-0.3.0-alpha assets. Local Windows offscreen checks: 20 tests, 18 passed and 2
+0.3.0-alpha assets. Local Windows offscreen checks: 25 tests, 23 passed and 2
 skipped because Tesseract and a Linux session bus are unavailable. These checks
 cover editable pen/text, text re-edit cancel/apply, shape hit testing, stacking,
 pixelation undo, render-cache invalidation and selection without a spurious undo.
@@ -20,7 +20,12 @@ Additional manual regression for a new build:
 4. Hover an empty ellipse centre and away from a diagonal line; neither should select.
 5. Move a pixelation region; verify it samples the content at its new position.
 6. Copy diagnostics from the tray and run `klip --diagnostics` on the installed build.
-7. On Wayland, cancel a pending portal request and immediately try another capture.
+7. Make at least 75 edits, then undo to the original capture and redo them all.
+   Include timestamp changes and confirm the timestamp controls follow Undo/Redo.
+8. With the app theme active, use Text 26 px, type text and change size/color while
+   editing. Confirm the applied result has the same font, wrapping and placement.
+9. Run `klip --check-desktop`; it should report properties without taking a screenshot.
+10. On Wayland, cancel a pending portal request and immediately try another capture.
 
 Real GNOME parent-window association, portal permissions, GTK/Qt/browser clipboard
 paste after closing the editor, and mixed-DPI multi-monitor capture remain pending.

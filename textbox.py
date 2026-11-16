@@ -4,6 +4,25 @@ from PySide6.QtGui import QColor, QPainter, QPen, QFont, QTextDocument
 from PySide6.QtWidgets import QWidget, QTextEdit
 
 
+def text_document(text, pixels, color, width, family):
+    """The same explicit pixel font and margins used by inline editing and export."""
+    from PySide6.QtGui import QTextCursor, QTextCharFormat
+    font = QFont(family)
+    font.setPixelSize(pixels)
+    doc = QTextDocument()
+    doc.setDefaultFont(font)
+    doc.setDocumentMargin(4)
+    doc.setPlainText(text)
+    cursor = QTextCursor(doc)
+    cursor.select(QTextCursor.SelectionType.Document)
+    fmt = QTextCharFormat()
+    fmt.setFont(font)
+    fmt.setForeground(QColor(color))
+    cursor.mergeCharFormat(fmt)
+    doc.setTextWidth(width)
+    return doc
+
+
 class TextInput(QTextEdit):
     accepted = Signal()
     cancelled = Signal()
@@ -99,13 +118,13 @@ class TextBox(QWidget):
         self.input.setAcceptRichText(False)
         self.input.setFrameStyle(0)
         self.input.setPlaceholderText('Type here…')
-        self.input.setStyleSheet('QTextEdit { background: transparent; color: '+self.color.name()+'; border: none; padding: 0; selection-background-color: #6254bd; }')
         self.input.viewport().setAutoFillBackground(False)
         self.input.setAutoFillBackground(False)
         font = QFont(parent.font())
         font.setPixelSize(pixels)
         self.input.setFont(font)
         self.input.document().setDocumentMargin(4)
+        self.set_text_style(color, pixels)
         self.input.textChanged.connect(parent.update)
         self.input.accepted.connect(self.accepted)
         self.input.cancelled.connect(self.cancelled)
@@ -116,6 +135,27 @@ class TextBox(QWidget):
         self.show()
         self.layout_children()
         self.input.setFocus()
+
+    def set_text_style(self, color, pixels, family=None):
+        self.color = QColor(color)
+        self.pixels = pixels
+        font = QFont(family or self.input.font().family())
+        font.setPixelSize(pixels)
+        # An explicit local rule prevents the application theme from forcing 13px.
+        self.input.setStyleSheet('QTextEdit { background: transparent; color: '+self.color.name()+
+            '; font-size: '+str(pixels)+'px; border: none; padding: 0; selection-background-color: #6254bd; }')
+        self.input.setFont(font)
+        self.input.document().setDefaultFont(font)
+        from PySide6.QtGui import QTextCursor, QTextCharFormat
+        selection = self.input.textCursor()
+        cursor = QTextCursor(self.input.document())
+        cursor.select(QTextCursor.SelectionType.Document)
+        fmt = QTextCharFormat()
+        fmt.setFont(font)
+        fmt.setForeground(self.color)
+        cursor.mergeCharFormat(fmt)
+        self.input.setTextCursor(selection)
+        self.input.setCurrentCharFormat(fmt)
 
     def layout_children(self):
         self.handle.setGeometry(1, 1, self.width()-2, 22)
@@ -154,17 +194,8 @@ class TextBox(QWidget):
 
     def paint_text(self, painter):
         # Render a fresh document so scroll/caret/selection and handles never export.
-        doc = QTextDocument()
-        doc.setDefaultFont(self.input.font())
-        doc.setDocumentMargin(4)
-        doc.setPlainText(self.input.toPlainText())
-        from PySide6.QtGui import QTextCursor, QTextCharFormat
-        cursor = QTextCursor(doc)
-        cursor.select(QTextCursor.SelectionType.Document)
-        fmt = QTextCharFormat()
-        fmt.setForeground(self.color)
-        cursor.mergeCharFormat(fmt)
-        doc.setTextWidth(self.input.viewport().width())
+        doc = text_document(self.input.toPlainText(), self.pixels, self.color,
+                            self.input.viewport().width(), self.input.font().family())
         origin = self.input.viewport().mapTo(self.parentWidget(), QPoint(0, 0))
         painter.save()
         painter.translate(origin)

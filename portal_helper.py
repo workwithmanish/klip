@@ -14,10 +14,43 @@ def emit(**data):
     print(json.dumps(data), flush=True)
 
 
+async def portal_properties(bus, interface):
+    """Inspect advertised support without requesting screenshot permission."""
+    from dbus_next import Message, MessageType
+    try:
+        reply = await asyncio.wait_for(bus.call(Message(destination=SERVICE, path=PATH,
+            interface='org.freedesktop.DBus.Properties', member='GetAll',
+            signature='s', body=[interface])), 3)
+        if reply.message_type == MessageType.ERROR:
+            return {'available': False, 'error': reply.error_name}
+        values = {key: value.value for key, value in reply.body[0].items()}
+        return {'available': bool(values), **values}
+    except asyncio.TimeoutError:
+        return {'available': False, 'error': 'Portal capability check timed out'}
+
+
+def screenshot_options(capabilities, variant):
+    options = {'modal': variant('b', False)}
+    version = capabilities.get('version')
+    if version is None or version >= 2:
+        options['interactive'] = variant('b', True)
+    if version is not None and version >= 3 and capabilities.get('AvailableTargets', 0) & 4:
+        options['target'] = variant('u', 4)
+    return options
+
+
 async def run(mode, parent=''):
     from dbus_next.aio import MessageBus
     from dbus_next import Message, MessageType, Variant
     bus = await MessageBus().connect()
+    if mode == 'capabilities':
+        try:
+            screenshot = await portal_properties(bus, 'org.freedesktop.portal.Screenshot')
+            shortcuts = await portal_properties(bus, 'org.freedesktop.portal.GlobalShortcuts')
+            emit(event='capabilities', screenshot=screenshot, shortcuts=shortcuts)
+        finally:
+            bus.disconnect()
+        return
     if not Path('/.flatpak-info').exists():
         registration = await bus.call(Message(destination=SERVICE,path=PATH,
             interface='org.freedesktop.host.portal.Registry',member='Register',
@@ -77,7 +110,8 @@ async def run(mode, parent=''):
 
     try:
         if mode == 'screenshot':
-            options = {'interactive':Variant('b',True),'modal':Variant('b',False)}
+            capabilities = await portal_properties(bus, 'org.freedesktop.portal.Screenshot')
+            options = screenshot_options(capabilities, Variant)
             results = await call_request('org.freedesktop.portal.Screenshot','Screenshot','sa{sv}',[parent,options],options)
             emit(event='screenshot',uri=results.get('uri',''))
         else:

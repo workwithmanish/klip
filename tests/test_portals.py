@@ -24,13 +24,26 @@ class PortalImageTests(unittest.TestCase):
         with patch.dict(os.environ,{'XDG_SESSION_TYPE':'wayland'}):
             self.assertTrue(use_capture_portal())
 
+    def test_wayland_display_fallback_without_session_variable(self):
+        with patch.dict(os.environ, {'XDG_SESSION_TYPE':'', 'WAYLAND_DISPLAY':'wayland-0'}):
+            self.assertTrue(use_capture_portal())
+
+    def test_screenshot_options_negotiate_advertised_version(self):
+        from portal_helper import screenshot_options
+        variant = lambda kind, value: value
+        self.assertNotIn('interactive', screenshot_options({'version':1}, variant))
+        self.assertNotIn('target', screenshot_options({'version':2}, variant))
+        self.assertEqual(screenshot_options({'version':3, 'AvailableTargets':5}, variant)['target'], 4)
+        self.assertNotIn('target', screenshot_options({'version':3, 'AvailableTargets':1}, variant))
+
 
 @unittest.skipUnless(os.environ.get('DBUS_SESSION_BUS_ADDRESS'),'Requires a temporary session bus')
 class PortalProtocolTests(unittest.IsolatedAsyncioTestCase):
     async def test_real_dbus_request_response(self):
         import asyncio
         from dbus_next.aio import MessageBus
-        from dbus_next.service import ServiceInterface,method,signal
+        from dbus_next.service import ServiceInterface,method,signal,dbus_property
+        from dbus_next.constants import PropertyAccess
         from dbus_next import Variant
         import portal_helper
         class Request(ServiceInterface):
@@ -47,9 +60,14 @@ class PortalProtocolTests(unittest.IsolatedAsyncioTestCase):
                 if app_id!='io.github.workwithmanish.klip':raise ValueError('Incorrect app identity')
         class Screenshot(ServiceInterface):
             def __init__(self):super().__init__('org.freedesktop.portal.Screenshot')
+            @dbus_property(access=PropertyAccess.READ)
+            def version(self)->'u': return 3
+            @dbus_property(access=PropertyAccess.READ)
+            def AvailableTargets(self)->'u': return 5
             @method()
             def Screenshot(self,parent:'s',options:'a{sv}')->'o':
                 if not options['interactive'].value:raise ValueError('Must request interactive capture')
+                if options['target'].value != 4:raise ValueError('Must request advertised area target')
                 asyncio.get_running_loop().call_later(.05,lambda:request.Response(response_code[0],{'uri':Variant('s','file:///tmp/test.png')}))
                 return request_path
         bus=await MessageBus().connect()
@@ -58,6 +76,11 @@ class PortalProtocolTests(unittest.IsolatedAsyncioTestCase):
         bus.export(request_path,request)
         emitted=[]
         try:
+            with patch.object(portal_helper,'emit',side_effect=lambda **data:emitted.append(data)):
+                await asyncio.wait_for(portal_helper.run('capabilities'),5)
+            self.assertEqual(emitted[0]['screenshot']['version'],3)
+            self.assertEqual(emitted[0]['screenshot']['AvailableTargets'],5)
+            emitted.clear()
             with patch.object(portal_helper,'emit',side_effect=lambda **data:emitted.append(data)):
                 await asyncio.wait_for(portal_helper.run('screenshot'),5)
             self.assertEqual(emitted,[{'event':'screenshot','uri':'file:///tmp/test.png'}])

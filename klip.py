@@ -7,16 +7,17 @@ import copy
 import json
 import platform
 import shutil
+import subprocess
 from PySide6 import __version__ as pyside_version
 from datetime import datetime
 from preferences import Preferences, ControlPanel
 from icons import tool_icon
-from textbox import TextBox
+from textbox import TextBox, text_document
 from watermark import timestamp_label, paint_watermark
 from ui_spacing import polish_inputs
 from ocr import show_ocr
 from theme import stylesheet
-from portals import PortalClient, use_capture_portal
+from portals import PortalClient, use_capture_portal, parent_window_identifier
 from geometry_tools import handles, hit_handle, paint_handles, transform_rect, cursor_for
 
 from PySide6.QtCore import Qt, QRect, QRectF, QPoint, QTimer, Signal, QLockFile, QDir, QSize
@@ -28,10 +29,10 @@ from PySide6.QtWidgets import (QApplication, QWidget, QMainWindow, QToolBar,
     QMenu, QMessageBox, QLabel, QSpinBox, QCheckBox, QPushButton, QHBoxLayout)
 
 
-def diagnostics():
+def diagnostics(probe=False):
     """Shareable environment facts; excludes usernames, paths and screenshots."""
     portal = use_capture_portal()
-    return {
+    report = {
         'application': 'Klip', 'python': platform.python_version(),
         'qt_binding': pyside_version, 'system': platform.system(),
         'architecture': platform.machine(),
@@ -41,8 +42,17 @@ def diagnostics():
         'capture_backend': 'desktop portal' if portal else 'native screen capture',
         'session_bus_present': bool(os.environ.get('DBUS_SESSION_BUS_ADDRESS')),
         'tesseract_available': shutil.which('tesseract') is not None,
-        'portal_capabilities': 'not probed; a real capture/shortcut request is required',
+        'portal_capabilities': 'not probed; use --check-desktop on Linux',
     }
+    if probe and sys.platform == 'linux':
+        try:
+            result = subprocess.run([sys.executable, os.path.join(os.path.dirname(__file__), 'portal_helper.py'),
+                'capabilities'], capture_output=True, text=True, timeout=12, check=False)
+            reply = json.loads(result.stdout.splitlines()[-1])
+            report['portal_capabilities'] = {key: reply.get(key, {}) for key in ('screenshot', 'shortcuts')} if reply.get('event') == 'capabilities' else {'error': reply.get('message', 'Probe failed')}
+        except (OSError, subprocess.TimeoutExpired, ValueError, IndexError) as error:
+            report['portal_capabilities'] = {'error': str(error)}
+    return report
 
 
 def clone_annotation(obj):
@@ -54,11 +64,13 @@ def clone_annotation(obj):
 class Canvas(QWidget):
     text_editing = Signal(bool)
     object_selected = Signal()
+    document_restored = Signal()
     def __init__(self, image):
         super().__init__()
         self.image = image.convertToFormat(QImage.Format.Format_ARGB32)
         self.history = []
         self.future = []
+        self._pending_edit = None
         self.objects = []
         self.selected = None
         self.hovered = None
@@ -78,6 +90,7 @@ class Canvas(QWidget):
         self.text_box = None
         self.color = QColor('#ff526b')
         self.width = 4
+        self.text_size = 24
         self.start = self.end = None
         self.guide_position = None
         self.guides_enabled = True
@@ -89,35 +102,62 @@ class Canvas(QWidget):
     def invalidate(self):
         self._revision += 1
 
+    def watermark_state(self):
+        return (self.watermark_enabled, self.watermark_size, self.watermark_opacity)
+
     def checkpoint(self):
+        self.seal_edit()
+        self._pending_edit = ([clone_annotation(obj) for obj in self.objects], self.watermark_state())
         self.invalidate()
-        self.history.append((QImage(self.image), [clone_annotation(obj) for obj in self.objects]))
-        self.history = self.history[-30:]
+
+    def seal_edit(self):
+        if self._pending_edit is None:
+            return
+        before, old_watermark = self._pending_edit
+        self._pending_edit = None
+        first = 0
+        while first < min(len(before), len(self.objects)) and before[first] == self.objects[first]:
+            first += 1
+        last_before, last_after = len(before), len(self.objects)
+        while last_before > first and last_after > first and before[last_before-1] == self.objects[last_after-1]:
+            last_before -= 1
+            last_after -= 1
+        new_watermark = self.watermark_state()
+        if last_before == first and last_after == first and old_watermark == new_watermark:
+            return
+        self.history.append((first, before[first:last_before],
+            [clone_annotation(obj) for obj in self.objects[first:last_after]], old_watermark, new_watermark))
         self.future.clear()
+
+    def restore_edit(self, edit, undo):
+        first, before, after, old_watermark, new_watermark = edit
+        remove, insert = (after, before) if undo else (before, after)
+        self.objects[first:first+len(remove)] = [clone_annotation(obj) for obj in insert]
+        self.watermark_enabled, self.watermark_size, self.watermark_opacity = old_watermark if undo else new_watermark
+        self.selected = self.hovered = None
+        self.drag = None
+        self.invalidate()
+        self.object_selected.emit()
+        self.document_restored.emit()
+        self.update()
 
     def undo(self):
         if self.text_box is not None:
             self.finish_text(False)
+        self.seal_edit()
         if self.history:
-            self.future.append((QImage(self.image), [clone_annotation(obj) for obj in self.objects]))
-            self.image, self.objects = self.history.pop()
-            self.invalidate()
-            self.hovered = None
-            self.selected = None
-            self.object_selected.emit()
-            self.update()
+            edit = self.history.pop()
+            self.restore_edit(edit, True)
+            self.future.append(edit)
 
     def redo(self):
         if self.text_box is not None:
             self.finish_text(False)
+        self.seal_edit()
         if self.future:
-            self.history.append((QImage(self.image), [clone_annotation(obj) for obj in self.objects]))
-            self.image, self.objects = self.future.pop()
-            self.invalidate()
-            self.hovered = None
-            self.selected = None
-            self.object_selected.emit()
-            self.update()
+            edit = self.future.pop()
+            self.restore_edit(edit, False)
+            self.history.append(edit)
 
     def paintEvent(self, event):
         p = QPainter(self)
@@ -209,19 +249,9 @@ class Canvas(QWidget):
                             Qt.PenCapStyle.RoundCap, Qt.PenJoinStyle.RoundJoin))
         painter.setBrush(Qt.BrushStyle.NoBrush)
         if tool == 'Text':
-            doc = QTextDocument()
-            font = QFont(self.font())
-            font.setPixelSize(max(18, obj['width']*5))
-            doc.setDefaultFont(font)
-            doc.setDocumentMargin(4)
-            doc.setPlainText(obj['text'])
-            cursor = QTextCursor(doc)
-            cursor.select(QTextCursor.SelectionType.Document)
-            fmt = QTextCharFormat()
-            fmt.setForeground(obj['color'])
-            cursor.mergeCharFormat(fmt)
             rect = self.object_rect(obj)
-            doc.setTextWidth(rect.width())
+            doc = text_document(obj['text'], obj['font_pixels'], obj['color'],
+                                rect.width(), obj['font_family'])
             painter.translate(rect.topLeft())
             doc.drawContents(painter, QRectF(0, 0, rect.width(), rect.height()))
         elif tool == 'Highlight':
@@ -267,9 +297,14 @@ class Canvas(QWidget):
 
     def set_property(self, name, value):
         setattr(self, name, value)
+        if self.text_box is not None and name in ('color', 'text_size'):
+            self.text_box.set_text_style(self.color if name == 'color' else self.text_box.color,
+                                         value if name == 'text_size' else self.text_box.pixels)
+            return
         if self.selected is not None:
             self.checkpoint()
-            self.objects[self.selected][name] = value
+            property_name = 'font_pixels' if name == 'text_size' else name
+            self.objects[self.selected][property_name] = value
             self.update()
 
     def delete_selected(self):
@@ -333,7 +368,7 @@ class Canvas(QWidget):
             obj = dict(tool='Text', text=text, start=origin,
                 end=origin + extent,
                 color=QColor(box.color), width=self.objects[index]['width'] if index is not None else self.width,
-                opacity=100, filled=False)
+                opacity=100, filled=False, font_pixels=box.pixels, font_family=box.input.font().family())
             if index is None:
                 self.checkpoint()
                 self.objects.append(obj)
@@ -361,9 +396,10 @@ class Canvas(QWidget):
         self.editing_index = index
         self.selected = None
         self.text_editing.emit(True)
-        self.text_box = TextBox(self, rect, obj['color'], max(18, obj['width']*5))
+        self.text_box = TextBox(self, rect, obj['color'], obj['font_pixels'])
         # Preserve document coordinates independently of the inline widget's chrome.
         self.editing_geometry = self.text_box.geometry()
+        self.text_box.set_text_style(obj['color'], obj['font_pixels'], obj['font_family'])
         self.text_box.input.setPlainText(obj['text'])
         self.text_box.accepted.connect(lambda: self.finish_text(True))
         self.text_box.cancelled.connect(lambda: self.finish_text(False))
@@ -470,7 +506,7 @@ class Canvas(QWidget):
             self.start = self.end = None
             self.guide_position = None
             self.text_editing.emit(True)
-            self.text_box = TextBox(self, rect, self.color, max(18, self.width * 5))
+            self.text_box = TextBox(self, rect, self.color, self.text_size)
             self.text_box.accepted.connect(lambda: self.finish_text(True))
             self.text_box.cancelled.connect(lambda: self.finish_text(False))
             self.update()
@@ -524,7 +560,7 @@ class Editor(QMainWindow):
         width.setMinimumWidth(100)
         width.setMinimumHeight(34)
         self.width_control = width
-        width.valueChanged.connect(lambda value: self.canvas.set_property('width', value))
+        width.valueChanged.connect(self.size_changed)
         controls = QWidget()
         controls_layout = QHBoxLayout(controls)
         controls_layout.setContentsMargins(12, 4, 12, 4)
@@ -598,10 +634,13 @@ class Editor(QMainWindow):
         watermark_controls.setStyleSheet('')
         font_action = bar2.addWidget(watermark_controls)
         alpha_action = font_action
+        self.watermark_controls_action = font_action
         font_action.setVisible(False)
         alpha_action.setVisible(False)
         def watermark_changed():
             enabled = self.watermark_toggle.isChecked()
+            if (enabled, self.watermark_font.value(), self.watermark_alpha.value()) != self.canvas.watermark_state():
+                self.canvas.checkpoint()
             self.canvas.watermark_enabled = enabled
             self.canvas.watermark_size = self.watermark_font.value()
             self.canvas.watermark_opacity = self.watermark_alpha.value()
@@ -611,6 +650,7 @@ class Editor(QMainWindow):
         self.watermark_toggle.toggled.connect(watermark_changed)
         self.watermark_font.valueChanged.connect(watermark_changed)
         self.watermark_alpha.valueChanged.connect(watermark_changed)
+        self.canvas.document_restored.connect(self.sync_watermark)
         close_action = QAction('Close', self)
         close_action.triggered.connect(self.close)
         self.addAction(close_action)
@@ -668,13 +708,40 @@ class Editor(QMainWindow):
         for widget, name in ((self.width_control, 'width'), (self.opacity_control, 'opacity'), (self.fill_control, 'filled')):
             widget.blockSignals(True)
             if name == 'filled': widget.setChecked(obj[name])
-            else: widget.setValue(obj[name])
+            else: widget.setValue(obj['font_pixels'] if name == 'width' and obj['tool'] == 'Text' else obj[name])
             widget.blockSignals(False)
+
+    def size_changed(self, value):
+        tool = self.canvas.objects[self.canvas.selected]['tool'] if self.canvas.selected is not None else self.canvas.tool
+        if self.canvas.text_box is not None or self.canvas.editing_index is not None:
+            tool = 'Text'
+        self.canvas.set_property('text_size' if tool == 'Text' else 'width', value)
+
+    def sync_watermark(self):
+        for widget, value in ((self.watermark_toggle, self.canvas.watermark_enabled),
+                              (self.watermark_font, self.canvas.watermark_size),
+                              (self.watermark_alpha, self.canvas.watermark_opacity)):
+            widget.blockSignals(True)
+            if widget is self.watermark_toggle:
+                widget.setChecked(value)
+            else:
+                widget.setValue(value)
+            widget.blockSignals(False)
+        self.watermark_controls_action.setVisible(self.canvas.watermark_enabled)
 
     def update_tool_controls(self):
         tool = self.canvas.tool
         if self.canvas.selected is not None:
             tool = self.canvas.objects[self.canvas.selected]['tool']
+        if self.canvas.text_box is not None or self.canvas.editing_index is not None:
+            tool = 'Text'
+        self.width_control.blockSignals(True)
+        self.width_control.setRange(8, 144) if tool == 'Text' else self.width_control.setRange(1, 30)
+        self.width_control.setPrefix('Text ' if tool == 'Text' else 'Size ')
+        self.width_control.setSuffix(' px' if tool == 'Text' else '')
+        obj = self.canvas.objects[self.canvas.selected] if self.canvas.selected is not None else None
+        self.width_control.setValue((obj['font_pixels'] if obj else self.canvas.text_size) if tool == 'Text' else self.canvas.width)
+        self.width_control.blockSignals(False)
         self.width_control.setVisible(tool in ('Pen', 'Line', 'Arrow', 'Rectangle', 'Ellipse', 'Text'))
         self.opacity_control.setVisible(tool in ('Line', 'Arrow', 'Rectangle', 'Ellipse', 'Highlight'))
         self.fill_control.setVisible(tool in ('Rectangle', 'Ellipse'))
@@ -943,11 +1010,15 @@ class Controller:
         self.portal_capture.stopped.connect(self.close_capture_wait)
         self.portal_capture.error.connect(lambda message: QMessageBox.warning(None,'Klip · Desktop capture',message+'\n\nCheck that xdg-desktop-portal and your desktop backend are installed.'))
         self.portal_shortcuts = PortalClient(app)
+        self.portal_diagnostics = PortalClient(app)
+        self.portal_diagnostics.capabilities_ready.connect(self.copy_desktop_diagnostics)
+        self.portal_diagnostics.error.connect(lambda message: self.copy_desktop_diagnostics({'error': message}))
         self.portal_shortcuts.activated.connect(lambda action: self.capture('ocr' if action == 'ocr' else 'edit'))
         self.portal_shortcuts.shortcut_ready.connect(lambda: self.portal_status('Desktop shortcuts enabled.'))
         self.portal_shortcuts.error.connect(lambda message: self.portal_status('Shortcut portal: '+message+' Use desktop keyboard settings with the capture command below if unavailable.'))
         app.aboutToQuit.connect(self.portal_capture.stop)
         app.aboutToQuit.connect(self.portal_shortcuts.stop)
+        app.aboutToQuit.connect(self.portal_diagnostics.stop)
         self.icon = QIcon(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'assets', 'klip.png'))
         app.setWindowIcon(self.icon)
         self.tray = QSystemTrayIcon(self.icon)
@@ -969,7 +1040,17 @@ class Controller:
             QTimer.singleShot(500,lambda:self.configure_portal_shortcuts(True))
 
     def copy_diagnostics(self):
-        QApplication.clipboard().setText(json.dumps(diagnostics(), indent=2))
+        if sys.platform == 'linux':
+            self.portal_status('Checking desktop portal support…')
+            self.portal_diagnostics.start('capabilities')
+        else:
+            self.copy_desktop_diagnostics()
+
+    def copy_desktop_diagnostics(self, capabilities=None):
+        report = diagnostics()
+        if capabilities is not None:
+            report['portal_capabilities'] = capabilities
+        QApplication.clipboard().setText(json.dumps(report, indent=2))
         self.portal_status('Environment diagnostics copied. No screenshot or personal paths included.')
 
     def close_capture_wait(self):
@@ -992,7 +1073,7 @@ class Controller:
                 self.portal_status('A desktop shortcut session is already active. Disable it first, then configure to change keys.')
                 return
             self.portal_status('Waiting for desktop shortcut permission…')
-            self.portal_shortcuts.start('shortcuts')
+            self.portal_shortcuts.start('shortcuts', parent_window_identifier(self.panel))
         else:
             self.portal_shortcuts.stop()
             self.portal_status('Desktop shortcut session disabled.')
@@ -1030,7 +1111,8 @@ class Controller:
             self.tray.setToolTip('Klip · Waiting for desktop screenshot permission')
             self.cancel_capture_action.setEnabled(True)
             # The desktop owns screenshot consent and interactive region selection.
-            QTimer.singleShot(200, lambda: self.portal_capture.start('screenshot') if self.capture_pending else None)
+            parent = parent_window_identifier(self.panel)
+            QTimer.singleShot(200, lambda: self.portal_capture.start('screenshot', parent) if self.capture_pending else None)
             return
         for screen in self.app.screens():
             overlay = Selection(screen, self.prefs.get('guides'))
@@ -1075,9 +1157,10 @@ def main():
     parser.add_argument('--background', action='store_true', help='Start quietly in the tray')
     parser.add_argument('--open', metavar='IMAGE', help='Open an image in the editor')
     parser.add_argument('--diagnostics', action='store_true', help='Print shareable environment diagnostics without starting capture')
+    parser.add_argument('--check-desktop', action='store_true', help='Inspect screenshot/shortcut portal support without taking a screenshot')
     args = parser.parse_args()
-    if args.diagnostics:
-        print(json.dumps(diagnostics(), indent=2))
+    if args.diagnostics or args.check_desktop:
+        print(json.dumps(diagnostics(probe=args.check_desktop), indent=2))
         return 0
     app = QApplication(sys.argv)
     app.setApplicationName('Klip')

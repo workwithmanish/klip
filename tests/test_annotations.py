@@ -6,7 +6,7 @@ from pathlib import Path
 import unittest
 sys.path.insert(0, os.environ.get('KLIP_SOURCE', str(Path(__file__).resolve().parents[1])))
 from PySide6.QtCore import QPoint, Qt
-from PySide6.QtGui import QColor, QImage
+from PySide6.QtGui import QColor, QImage, QFontDatabase, QPainter
 from PySide6.QtTest import QTest
 from PySide6.QtWidgets import QApplication
 from klip import Canvas, diagnostics
@@ -16,6 +16,8 @@ class AnnotationTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.app = QApplication.instance() or QApplication([])
+        if os.name == 'nt':
+            QFontDatabase.addApplicationFont('C:/Windows/Fonts/segoeui.ttf')
 
     def setUp(self):
         self.source = QImage(640, 420, QImage.Format.Format_ARGB32)
@@ -131,6 +133,47 @@ class AnnotationTests(unittest.TestCase):
         self.assertIsInstance(report['session_bus_present'], bool)
         self.assertNotIn('HOME', report)
         self.assertNotIn('screenshot', report)
+
+    def test_more_than_thirty_edits_undo_to_original_and_redo(self):
+        for index in range(75):
+            self.draw('Line', QPoint(10, 10+index*3), QPoint(300, 10+index*3))
+        edited = self.c.export_image()
+        for _ in range(75):
+            self.c.undo()
+        self.assertEqual(self.c.objects, [])
+        self.assertEqual(self.c.export_image(), self.source)
+        self.assertEqual(len(self.c.future), 75)
+        for _ in range(75):
+            self.c.redo()
+        self.assertEqual(self.c.export_image(), edited)
+        self.assertEqual(sum(len(edit[1])+len(edit[2]) for edit in self.c.history), 75)
+
+    def test_text_live_style_and_export_match_under_app_theme(self):
+        from theme import stylesheet
+        previous = self.app.styleSheet()
+        try:
+            self.app.setStyleSheet(stylesheet())
+            self.c.text_size = 26
+            self.draw('Text', QPoint(40, 60), QPoint(480, 240))
+            box = self.c.text_box
+            QTest.keyClicks(box.input, 'HI Hello')
+            self.app.processEvents()
+            self.assertEqual(box.input.font().pixelSize(), 26)
+            self.assertEqual(box.input.document().defaultFont().pixelSize(), 26)
+            self.c.set_property('text_size', 32)
+            self.c.set_property('color', QColor('blue'))
+            self.app.processEvents()
+            self.assertEqual(box.input.font().pixelSize(), 32)
+            self.assertEqual(box.color, QColor('blue'))
+            expected = self.source.copy()
+            painter = QPainter(expected)
+            box.paint_text(painter)
+            painter.end()
+            QTest.keyClick(box.input, Qt.Key.Key_Return)
+            self.assertEqual(self.c.objects[0]['font_pixels'], 32)
+            self.assertEqual(self.c.export_image(), expected)
+        finally:
+            self.app.setStyleSheet(previous)
 
 
 if __name__ == '__main__':
