@@ -2,6 +2,30 @@
 
 Released 2026-11-15. Installer/app version: 0.3.0.
 
+## Development main — 2026-11-16
+
+The annotation and diagnostics improvements on `main` are not in the published
+0.3.0-alpha assets. Local Windows offscreen checks: 20 tests, 18 passed and 2
+skipped because Tesseract and a Linux session bus are unavailable. These checks
+cover editable pen/text, text re-edit cancel/apply, shape hit testing, stacking,
+pixelation undo, render-cache invalidation and selection without a spurious undo.
+An offscreen editor preview was also visually checked. These are editor checks,
+not a Windows support claim or a Wayland compositor test.
+
+Additional manual regression for a new build:
+
+1. Draw a pen stroke; Select, hover, move, resize, recolor, delete, undo and redo.
+2. Add multiline text; move/resize it, double-click to edit, then try Apply and Cancel.
+3. Draw through an earlier shape; verify the newer stroke renders on top.
+4. Hover an empty ellipse centre and away from a diagonal line; neither should select.
+5. Move a pixelation region; verify it samples the content at its new position.
+6. Copy diagnostics from the tray and run `klip --diagnostics` on the installed build.
+7. On Wayland, cancel a pending portal request and immediately try another capture.
+
+Real GNOME parent-window association, portal permissions, GTK/Qt/browser clipboard
+paste after closing the editor, and mixed-DPI multi-monitor capture remain pending.
+Do not describe those behaviours as fixed solely because offscreen checks pass.
+
 | Environment / check | Evidence | What is still unverified |
 | --- | --- | --- |
 | Kali Rolling, XFCE/X11, x86_64 | User manually tested capture/editor and fresh native installation during earlier 0.1/0.2 development | Full manual regression on 0.3.0 is not yet reported |

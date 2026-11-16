@@ -74,6 +74,30 @@ Installed package: `klip --capture`, `klip --settings`, `klip --background`,
 `klip --ocr`, `klip --open image.png`. Source setup: use the selected Python and `klip.py` path.
 Flatpak: prefix arguments with `flatpak run io.github.workwithmanish.klip`.
 
+Development `main` also supports `klip --diagnostics` (or `python3 klip.py
+--diagnostics` from source). This prints a small JSON environment report without
+starting QApplication or requesting screenshot access. Tray Copy diagnostics gives
+the same report. Portal capabilities are explicitly marked as not probed.
+
+## Annotation model on development main
+
+The original capture remains unchanged. Pen point lists, text content/rectangles,
+shapes and pixelation regions live in an ordered annotation stack. Export composites
+that stack and the optional watermark. Inline text temporarily hides its original
+annotation; Apply replaces it and Cancel restores it. Double-click text in Select
+mode to reopen it. Pixelation samples preceding layers at its current bounds.
+
+Hover and click selection share path-based geometry with a small stroke tolerance.
+Unfilled shape interiors are not selectable. Text boxes and filled regions are.
+Undo retains up to 30 snapshots of annotation data and implicitly shared immutable
+QImages; this is bounded snapshot history, not a minimal-delta command system.
+Document changes invalidate a composed-image cache; cursor guides do not. Watermark
+settings and inline edit visibility participate in the cache key.
+
+These improvements are unreleased. Do not reuse the existing release tag or imply
+that its downloadable artifacts contain them. Bump the package/app version and
+release metadata together before publishing a new installer.
+
 Login startup and desktop shortcuts contain absolute paths. Recreate them after
 moving the source/interpreter. They are per-user and need no administrator access.
 

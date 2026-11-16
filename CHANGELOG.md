@@ -1,5 +1,19 @@
 # Changelog
 
+## Unreleased — development changes, 2026-11-16
+
+- Keep pen strokes and committed text as selectable annotations, with text re-editing
+  on double-click, move/resize, color changes, deletion and undo/redo.
+- Match hover/click selection to stroke geometry; preserve chronological layering.
+- Keep pixelation in the annotation stack and recompute it when moved/resized.
+- Cache composed images during pointer movement and share immutable screenshot
+  pixels across bounded undo snapshots. Simple selection no longer adds an undo step.
+- Add tray Copy diagnostics, CLI `--diagnostics`, and Cancel pending capture.
+- Add regression checks for retained annotations, geometry, history and caching.
+
+The published 0.3.0-alpha installers are unchanged. GNOME/KDE Wayland and mixed-DPI
+desktop validation remain pending; these changes do not claim new platform support.
+
 ## 0.3.0-alpha — released 2026-11-15
 
 [Download release](https://github.com/workwithmanish/klip/releases/tag/v0.3.0-alpha).

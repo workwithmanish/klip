@@ -16,6 +16,34 @@ Flatpak is cross-distro: it can also be tested on Kali. It is not Fedora-only.
 Choose one installation method and quit any old instance before switching.
 [Verified tests and remaining desktop checks](docs/TESTING.md).
 
+## Latest development improvements
+
+These changes are on `main`; the downloadable v0.3.0-alpha release predates them.
+
+- Pen strokes and text stay editable. Choose **Select** to move, resize, recolor
+  or delete them. **Double-click a text annotation** to change its words;
+  Enter applies, Shift+Enter adds a line and Esc cancels that edit.
+- Hover glow and selection follow visible strokes instead of empty bounding boxes.
+- Annotations keep their drawing order. Pixelation can be moved/resized and applies
+  to the content underneath at its new position. Pixelation is not secure redaction.
+- Pointer movement reuses the rendered image, and undo snapshots share the unchanged
+  screenshot instead of copying its pixels for every edit.
+- Tray **Copy diagnostics** copies environment information for a bug report.
+  Use **Cancel pending capture** to stop waiting for a desktop portal request.
+
+To print diagnostics without opening a window:
+
+```sh
+klip --diagnostics
+# From a source checkout:
+python3 klip.py --diagnostics
+# Flatpak, after installing a build containing these changes:
+flatpak run io.github.workwithmanish.klip --diagnostics
+```
+
+Diagnostics contain no screenshot or personal file paths. They describe the
+environment; they do not certify that a desktop portal or compositor works.
+
 ## Linux, Debian, Ubuntu, Kali… what is the difference?
 
 Windows and macOS are operating systems. **Linux** is a kernel—the core of an

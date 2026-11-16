@@ -4,6 +4,10 @@ import math
 import os
 import sys
 import copy
+import json
+import platform
+import shutil
+from PySide6 import __version__ as pyside_version
 from datetime import datetime
 from preferences import Preferences, ControlPanel
 from icons import tool_icon
@@ -15,13 +19,36 @@ from theme import stylesheet
 from portals import PortalClient, use_capture_portal
 from geometry_tools import handles, hit_handle, paint_handles, transform_rect, cursor_for
 
-from PySide6.QtCore import Qt, QRect, QPoint, QTimer, Signal, QLockFile, QDir, QSize
+from PySide6.QtCore import Qt, QRect, QRectF, QPoint, QTimer, Signal, QLockFile, QDir, QSize
 from PySide6.QtGui import (QAction, QColor, QIcon, QImage, QKeySequence,
-                          QPainter, QPen, QPixmap, QShortcut)
+                          QPainter, QPen, QPixmap, QShortcut, QPainterPath, QPainterPathStroker, QFont, QTextDocument, QTextCursor, QTextCharFormat)
 from PySide6.QtNetwork import QLocalServer, QLocalSocket
 from PySide6.QtWidgets import (QApplication, QWidget, QMainWindow, QToolBar,
     QFileDialog, QColorDialog, QInputDialog, QScrollArea, QSystemTrayIcon,
     QMenu, QMessageBox, QLabel, QSpinBox, QCheckBox, QPushButton, QHBoxLayout)
+
+
+def diagnostics():
+    """Shareable environment facts; excludes usernames, paths and screenshots."""
+    portal = use_capture_portal()
+    return {
+        'application': 'Klip', 'python': platform.python_version(),
+        'qt_binding': pyside_version, 'system': platform.system(),
+        'architecture': platform.machine(),
+        'desktop': os.environ.get('XDG_CURRENT_DESKTOP', 'unknown'),
+        'session': os.environ.get('XDG_SESSION_TYPE', 'unknown'),
+        'flatpak': os.path.exists('/.flatpak-info'),
+        'capture_backend': 'desktop portal' if portal else 'native screen capture',
+        'session_bus_present': bool(os.environ.get('DBUS_SESSION_BUS_ADDRESS')),
+        'tesseract_available': shutil.which('tesseract') is not None,
+        'portal_capabilities': 'not probed; a real capture/shortcut request is required',
+    }
+
+
+def clone_annotation(obj):
+    # Raster patches are immutable; QImage uses implicit sharing rather than pickle.
+    return {key: QImage(value) if isinstance(value, QImage) else copy.deepcopy(value)
+            for key, value in obj.items()}
 
 
 class Canvas(QWidget):
@@ -36,6 +63,11 @@ class Canvas(QWidget):
         self.selected = None
         self.hovered = None
         self.drag = None
+        self.stroke = []
+        self.editing_index = None
+        self._revision = 0
+        self._cache_key = None
+        self._composite = None
         self.opacity = 100
         self.watermark_enabled = False
         self.watermark_size = 14
@@ -54,43 +86,62 @@ class Canvas(QWidget):
         self.setFixedSize(self.image.size())
         self.setCursor(Qt.CursorShape.CrossCursor)
 
+    def invalidate(self):
+        self._revision += 1
+
     def checkpoint(self):
-        self.history.append((self.image.copy(), copy.deepcopy(self.objects)))
+        self.invalidate()
+        self.history.append((QImage(self.image), [clone_annotation(obj) for obj in self.objects]))
         self.history = self.history[-30:]
         self.future.clear()
 
     def undo(self):
+        if self.text_box is not None:
+            self.finish_text(False)
         if self.history:
-            self.future.append((self.image.copy(), copy.deepcopy(self.objects)))
+            self.future.append((QImage(self.image), [clone_annotation(obj) for obj in self.objects]))
             self.image, self.objects = self.history.pop()
+            self.invalidate()
+            self.hovered = None
             self.selected = None
             self.object_selected.emit()
             self.update()
 
     def redo(self):
+        if self.text_box is not None:
+            self.finish_text(False)
         if self.future:
-            self.history.append((self.image.copy(), copy.deepcopy(self.objects)))
+            self.history.append((QImage(self.image), [clone_annotation(obj) for obj in self.objects]))
             self.image, self.objects = self.future.pop()
+            self.invalidate()
+            self.hovered = None
             self.selected = None
             self.object_selected.emit()
             self.update()
 
     def paintEvent(self, event):
         p = QPainter(self)
-        p.drawImage(0, 0, self.image)
-        for obj in self.objects:
-            self.paint_object(p, obj)
-        self.paint_watermark(p)
+        p.drawImage(0, 0, self.composed_image())
         if self.tool == 'Select' and self.drag is None and self.hovered is not None and self.hovered < len(self.objects) and self.hovered != self.selected:
-            glow = copy.deepcopy(self.objects[self.hovered])
-            glow['color'] = QColor('#ac9cff')
-            glow['filled'] = False
-            for extra, opacity in ((10, 10), (5, 18), (2, 45)):
-                glow['width'] = self.objects[self.hovered]['width'] + extra
-                glow['opacity'] = opacity
-                self.paint_object(p, glow)
+            obj = self.objects[self.hovered]
+            path = self.object_path(obj)
+            p.save()
+            p.setBrush(Qt.BrushStyle.NoBrush)
+            for extra, alpha in ((9, 25), (4, 65)):
+                color = QColor('#ac9cff')
+                color.setAlpha(alpha)
+                p.setPen(QPen(color, obj['width'] + extra, Qt.PenStyle.SolidLine,
+                              Qt.PenCapStyle.RoundCap, Qt.PenJoinStyle.RoundJoin))
+                p.drawPath(path)
+            p.restore()
         if self.start is not None:
-            self.draw(p)
+            if self.tool == 'Pen':
+                self.paint_object(p, dict(tool='Pen', points=self.stroke, color=self.color,
+                    width=self.width, opacity=100, filled=False, start=self.start, end=self.end))
+            else:
+                p.save()
+                self.draw(p)
+                p.restore()
         if self.guides_enabled and self.tool != 'Select':
             point = (self.text_box.alignment_point() if self.text_box.moving else None) if self.text_box is not None else self.guide_position
             if point is not None:
@@ -100,30 +151,115 @@ class Canvas(QWidget):
         if self.guides_enabled and self.text_box is None and self.tool != 'Select':
             point = self.guide_position
             if point is not None:
-                draw_inspector(p, self.rect(), point, self.export_image())
+                draw_inspector(p, self.rect(), point, self.composed_image())
 
     def object_rect(self, obj):
+        if obj['tool'] == 'Pen':
+            return self.object_path(obj).boundingRect().toAlignedRect()
         return QRect(obj['start'], obj['end']).normalized()
 
+    def object_path(self, obj):
+        path = QPainterPath()
+        rect = QRectF(QRect(obj['start'], obj['end']).normalized())
+        tool = obj['tool']
+        if tool == 'Pen':
+            points = obj['points']
+            if points:
+                path.moveTo(points[0])
+                for point in points[1:]:
+                    path.lineTo(point)
+                if len(points) == 1:
+                    path.lineTo(points[0] + QPoint(1, 0))
+        elif tool in ('Line', 'Arrow'):
+            path.moveTo(obj['start'])
+            path.lineTo(obj['end'])
+            if tool == 'Arrow':
+                angle = math.atan2(obj['end'].y()-obj['start'].y(), obj['end'].x()-obj['start'].x())
+                for offset in (-0.5, 0.5):
+                    path.moveTo(obj['end'])
+                    path.lineTo(obj['end'] - QPoint(int(18*math.cos(angle+offset)), int(18*math.sin(angle+offset))))
+        elif tool == 'Ellipse':
+            path.addEllipse(rect)
+        else:
+            path.addRect(rect)
+        return path
+
+    def hit_object(self, point):
+        for index in range(len(self.objects)-1, -1, -1):
+            obj = self.objects[index]
+            if index == self.editing_index:
+                continue
+            path = self.object_path(obj)
+            if (obj['filled'] or obj['tool'] in ('Text', 'Highlight', 'Pixelate')) and path.contains(point):
+                return index
+            stroke = QPainterPathStroker()
+            stroke.setWidth(max(1, obj['width']) + 8)
+            stroke.setCapStyle(Qt.PenCapStyle.RoundCap)
+            stroke.setJoinStyle(Qt.PenJoinStyle.RoundJoin)
+            if stroke.createStroke(path).contains(point):
+                return index
+        return None
+
     def paint_object(self, painter, obj):
-        names = ('start', 'end', 'tool', 'color', 'width', 'opacity', 'filled')
-        saved = {name: getattr(self, name) for name in names}
-        for name in names:
-            setattr(self, name, obj[name])
         painter.save()
-        self.draw(painter)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        tool = obj['tool']
+        painter.setOpacity(obj['opacity']/100)
+        painter.setPen(QPen(obj['color'], obj['width'], Qt.PenStyle.SolidLine,
+                            Qt.PenCapStyle.RoundCap, Qt.PenJoinStyle.RoundJoin))
+        painter.setBrush(Qt.BrushStyle.NoBrush)
+        if tool == 'Text':
+            doc = QTextDocument()
+            font = QFont(self.font())
+            font.setPixelSize(max(18, obj['width']*5))
+            doc.setDefaultFont(font)
+            doc.setDocumentMargin(4)
+            doc.setPlainText(obj['text'])
+            cursor = QTextCursor(doc)
+            cursor.select(QTextCursor.SelectionType.Document)
+            fmt = QTextCharFormat()
+            fmt.setForeground(obj['color'])
+            cursor.mergeCharFormat(fmt)
+            rect = self.object_rect(obj)
+            doc.setTextWidth(rect.width())
+            painter.translate(rect.topLeft())
+            doc.drawContents(painter, QRectF(0, 0, rect.width(), rect.height()))
+        elif tool == 'Highlight':
+            color = QColor(obj['color'])
+            color.setAlpha(85)
+            painter.fillRect(self.object_rect(obj), color)
+        else:
+            if obj['filled'] and tool in ('Rectangle', 'Ellipse'):
+                painter.setBrush(obj['color'])
+            painter.drawPath(self.object_path(obj))
         painter.restore()
-        for name, value in saved.items():
-            setattr(self, name, value)
+
+    def composed_image(self, include_watermark=True):
+        key = (self._revision, self.watermark_enabled, self.watermark_size,
+               self.watermark_opacity, self.watermark_label, self.editing_index, include_watermark)
+        if self._cache_key != key:
+            result = self.image.copy()
+            painter = QPainter(result)
+            for index, obj in enumerate(self.objects):
+                if index != self.editing_index:
+                    if obj['tool'] == 'Pixelate':
+                        # Apply the effect to preceding layers at its current location.
+                        painter.end()
+                        rect = self.object_rect(obj).intersected(result.rect())
+                        tile = result.copy(rect).scaled(max(1, rect.width()//14), max(1, rect.height()//14))
+                        painter = QPainter(result)
+                        painter.drawImage(rect, tile)
+                    else:
+                        self.paint_object(painter, obj)
+            if include_watermark:
+                self.paint_watermark(painter)
+            painter.end()
+            self._composite = result
+            self._cache_key = key
+        return self._composite
 
     def export_image(self):
-        result = self.image.copy()
-        painter = QPainter(result)
-        for obj in self.objects:
-            self.paint_object(painter, obj)
-        self.paint_watermark(painter)
-        painter.end()
-        return result
+        return QImage(self.composed_image())
 
     def paint_watermark(self, painter):
         if self.watermark_enabled:
@@ -140,6 +276,7 @@ class Canvas(QWidget):
         if self.selected is not None:
             self.checkpoint()
             self.objects.pop(self.selected)
+            self.hovered = None
             self.selected = None
             self.object_selected.emit()
             self.update()
@@ -183,16 +320,44 @@ class Canvas(QWidget):
         box = self.text_box
         if box is None:
             return
-        if apply and box.input.toPlainText().strip():
+        index = self.editing_index
+        text = box.input.toPlainText()
+        if apply and text.strip():
             self.checkpoint()
-            painter = QPainter(self.image)
-            box.paint_text(painter)
-            painter.end()
+            origin = box.input.viewport().mapTo(self, QPoint(0, 0))
+            obj = dict(tool='Text', text=text, start=origin,
+                end=origin + QPoint(box.input.viewport().width()-1, box.input.viewport().height()-1),
+                color=QColor(box.color), width=self.objects[index]['width'] if index is not None else self.width,
+                opacity=100, filled=False)
+            if index is None:
+                self.objects.append(obj)
+            else:
+                self.objects[index] = obj
+        self.editing_index = None
         self.text_box = None
+        self.invalidate()
         box.hide()
         box.deleteLater()
         self.text_editing.emit(False)
         self.setFocus()
+        self.update()
+
+    def mouseDoubleClickEvent(self, event):
+        if self.tool != 'Select':
+            return
+        index = self.hit_object(event.position().toPoint())
+        if index is None or self.objects[index]['tool'] != 'Text':
+            return
+        self.drag = None
+        obj = self.objects[index]
+        rect = self.object_rect(obj).adjusted(-5, -26, 3, 6).intersected(self.rect())
+        self.editing_index = index
+        self.selected = None
+        self.text_editing.emit(True)
+        self.text_box = TextBox(self, rect, obj['color'], max(18, obj['width']*5))
+        self.text_box.input.setPlainText(obj['text'])
+        self.text_box.accepted.connect(lambda: self.finish_text(True))
+        self.text_box.cancelled.connect(lambda: self.finish_text(False))
         self.update()
 
     def mousePressEvent(self, event):
@@ -205,45 +370,54 @@ class Canvas(QWidget):
             obj = self.objects[self.selected]
             rect = self.object_rect(obj)
             handle = hit_handle(rect, point)
-            if handle >= 0 or rect.contains(point):
-                self.checkpoint()
-                self.drag = (point, rect, handle, copy.deepcopy(obj))
+            if handle >= 0 or self.hit_object(point) == self.selected:
+                self.drag_committed = False
+                self.drag = (point, rect, handle, clone_annotation(obj))
                 return
         if self.tool == 'Select':
             self.selected = None
-            for index in range(len(self.objects)-1, -1, -1):
-                if self.object_rect(self.objects[index]).adjusted(-5,-5,5,5).contains(point):
-                    self.selected = index
-                    self.object_selected.emit()
-                    obj = self.objects[index]
-                    self.checkpoint()
-                    self.drag = (point, self.object_rect(obj), -1, copy.deepcopy(obj))
-                    break
+            index = self.hit_object(point)
+            if index is not None:
+                self.selected = index
+                obj = self.objects[index]
+                self.drag_committed = False
+                self.drag = (point, self.object_rect(obj), -1, clone_annotation(obj))
             self.object_selected.emit()
             self.update()
             return
         self.selected = None
         self.start = self.end = event.position().toPoint()
         if self.tool == 'Pen':
-            self.checkpoint()
+            self.stroke = [QPoint(point)]
         self.update()
 
     def mouseMoveEvent(self, event):
         self.guide_position = event.position().toPoint()
         if self.tool == 'Select' and self.drag is None:
-            self.hovered = next((i for i in range(len(self.objects)-1, -1, -1)
-                if self.object_rect(self.objects[i]).adjusted(-5,-5,5,5).contains(self.guide_position)), None)
+            self.hovered = self.hit_object(self.guide_position)
             self.setCursor(Qt.CursorShape.PointingHandCursor if self.hovered is not None else Qt.CursorShape.ArrowCursor)
         self.update()
         if self.drag is not None:
             anchor, original, handle, obj = self.drag
+            if not self.drag_committed:
+                if anchor == self.guide_position:
+                    return
+                self.checkpoint()
+                self.drag_committed = True
             rect = transform_rect(original, anchor, self.guide_position, handle, self.rect())
             current = self.objects[self.selected]
+            def mapped(point):
+                x = rect.left() + round((point.x()-original.left()) * max(1,rect.width()-1)/max(1,original.width()-1))
+                y = rect.top() + round((point.y()-original.top()) * max(1,rect.height()-1)/max(1,original.height()-1))
+                return QPoint(x, y)
+            if obj['tool'] == 'Pen':
+                current['points'] = [mapped(point) for point in obj['points']]
             for name in ('start', 'end'):
                 point = obj[name]
                 x = rect.left() + round((point.x()-original.left()) * max(1,rect.width()-1)/max(1,original.width()-1))
                 y = rect.top() + round((point.y()-original.top()) * max(1,rect.height()-1)/max(1,original.height()-1))
                 current[name] = QPoint(x,y)
+            self.invalidate()
             return
         if self.selected is not None:
             rect = self.object_rect(self.objects[self.selected])
@@ -254,11 +428,7 @@ class Canvas(QWidget):
         previous = self.end
         self.end = event.position().toPoint()
         if self.tool == 'Pen':
-            p = QPainter(self.image)
-            p.setRenderHint(QPainter.RenderHint.Antialiasing)
-            p.setPen(QPen(self.color, self.width, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap))
-            p.drawLine(previous, self.end)
-            p.end()
+            self.stroke.append(QPoint(self.end))
         self.update()
 
     def mouseReleaseEvent(self, event):
@@ -269,9 +439,12 @@ class Canvas(QWidget):
         if self.start is None or event.button() != Qt.MouseButton.LeftButton:
             return
         self.end = event.position().toPoint()
-        if self.tool in ('Rectangle', 'Ellipse', 'Highlight', 'Line', 'Arrow'):
+        if self.tool in ('Rectangle', 'Ellipse', 'Highlight', 'Line', 'Arrow', 'Pen'):
             self.checkpoint()
             self.objects.append({name: copy.deepcopy(getattr(self, name)) for name in ('start', 'end', 'tool', 'color', 'width', 'opacity', 'filled')})
+            if self.tool == 'Pen':
+                self.objects[-1]['points'] = self.stroke + [QPoint(self.end)]
+                self.stroke = []
             self.selected = len(self.objects)-1
             self.start = self.end = None
             self.object_selected.emit()
@@ -293,20 +466,12 @@ class Canvas(QWidget):
             self.text_box.cancelled.connect(lambda: self.finish_text(False))
             self.update()
             return
-        if self.tool != 'Pen':
-            self.checkpoint()
-            if self.tool == 'Pixelate':
-                rect = QRect(self.start, self.end).normalized().intersected(self.image.rect())
-                if rect.width() > 0 and rect.height() > 0:
-                    tile = self.image.copy(rect).scaled(max(1, rect.width()//14), max(1, rect.height()//14))
-                    tile = tile.scaled(rect.size(), Qt.AspectRatioMode.IgnoreAspectRatio, Qt.TransformationMode.FastTransformation)
-                    p = QPainter(self.image)
-                    p.drawImage(rect.topLeft(), tile)
-                    p.end()
-            else:
-                p = QPainter(self.image)
-                self.draw(p)
-                p.end()
+        if self.tool == 'Pixelate':
+            rect = QRect(self.start, self.end).normalized().intersected(self.image.rect())
+            if rect.width() > 0 and rect.height() > 0:
+                self.checkpoint()
+                self.objects.append(dict(tool='Pixelate', start=rect.topLeft(), end=rect.bottomRight(),
+                    color=QColor(self.color), width=1, opacity=100, filled=True))
         self.start = self.end = None
         self.update()
 
@@ -766,6 +931,7 @@ class Controller:
         self.portal_capture = PortalClient(app)
         self.portal_capture.image_ready.connect(self.portal_image)
         self.portal_capture.stopped.connect(lambda:setattr(self,'capture_pending',False))
+        self.portal_capture.stopped.connect(self.close_capture_wait)
         self.portal_capture.error.connect(lambda message: QMessageBox.warning(None,'Klip · Desktop capture',message+'\n\nCheck that xdg-desktop-portal and your desktop backend are installed.'))
         self.portal_shortcuts = PortalClient(app)
         self.portal_shortcuts.activated.connect(lambda action: self.capture('ocr' if action == 'ocr' else 'edit'))
@@ -780,7 +946,10 @@ class Controller:
         menu = QMenu()
         menu.addAction('Capture area', self.capture)
         menu.addAction('Capture text (OCR)', lambda: self.capture('ocr'))
+        self.cancel_capture_action = menu.addAction('Cancel pending capture', self.cancel_portal_capture)
+        self.cancel_capture_action.setEnabled(False)
         menu.addAction('Settings…', self.show_settings)
+        menu.addAction('Copy diagnostics', self.copy_diagnostics)
         menu.addSeparator()
         menu.addAction('Quit Klip', app.quit)
         self.tray.setContextMenu(menu)
@@ -789,6 +958,19 @@ class Controller:
         self.tray.show()
         if self.prefs.get('portal_shortcuts',False) in (True,'true','1'):
             QTimer.singleShot(500,lambda:self.configure_portal_shortcuts(True))
+
+    def copy_diagnostics(self):
+        QApplication.clipboard().setText(json.dumps(diagnostics(), indent=2))
+        self.portal_status('Environment diagnostics copied. No screenshot or personal paths included.')
+
+    def close_capture_wait(self):
+        self.tray.setToolTip('Klip · Capture and annotate')
+        self.cancel_capture_action.setEnabled(False)
+
+    def cancel_portal_capture(self):
+        self.capture_pending = False
+        self.portal_capture.stop()
+        self.close_capture_wait()
 
     def portal_status(self,message):
         if self.panel is not None:
@@ -836,8 +1018,10 @@ class Controller:
                 self.panel.hide()
             self.portal_timestamp = timestamp_label()
             self.capture_pending = True
+            self.tray.setToolTip('Klip · Waiting for desktop screenshot permission')
+            self.cancel_capture_action.setEnabled(True)
             # The desktop owns screenshot consent and interactive region selection.
-            QTimer.singleShot(200,lambda:self.portal_capture.start('screenshot'))
+            QTimer.singleShot(200, lambda: self.portal_capture.start('screenshot') if self.capture_pending else None)
             return
         for screen in self.app.screens():
             overlay = Selection(screen, self.prefs.get('guides'))
@@ -854,6 +1038,7 @@ class Controller:
             overlay.activateWindow()
 
     def capture_finished(self, image):
+        self.close_capture_wait()
         if self.capture_mode == 'ocr':
             self.cleanup()
             show_ocr(image)
@@ -880,7 +1065,11 @@ def main():
     parser.add_argument('--settings', action='store_true', help='Open the Klip control panel')
     parser.add_argument('--background', action='store_true', help='Start quietly in the tray')
     parser.add_argument('--open', metavar='IMAGE', help='Open an image in the editor')
+    parser.add_argument('--diagnostics', action='store_true', help='Print shareable environment diagnostics without starting capture')
     args = parser.parse_args()
+    if args.diagnostics:
+        print(json.dumps(diagnostics(), indent=2))
+        return 0
     app = QApplication(sys.argv)
     app.setApplicationName('Klip')
     app.setDesktopFileName('io.github.workwithmanish.klip')
