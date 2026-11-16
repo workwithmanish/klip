@@ -58,7 +58,8 @@ def build(version, output):
         files['usr/share/klip/assets/'+asset.name] = (asset.read_bytes(), 0o644)
     files['usr/bin/klip'] = (b'#!/bin/sh\nexec /usr/bin/python3 /usr/share/klip/klip.py "$@"\n', 0o755)
     files['usr/share/applications/io.github.workwithmanish.klip.desktop'] = ((ROOT/'packaging/klip.desktop').read_bytes(), 0o644)
-    for name in ('README.md', 'LICENSE', 'THIRD_PARTY.md'):
+    for name in ('README.md', 'LICENSE', 'THIRD_PARTY.md', 'CONTRIBUTING.md',
+                 'CHANGELOG.md', 'docs/INSTALL.md', 'docs/DEVELOPMENT.md', 'docs/TESTING.md'):
         files['usr/share/doc/klip/'+name] = ((ROOT/name).read_bytes(), 0o644)
     files['usr/share/doc/klip/copyright'] = ((ROOT/'LICENSE').read_bytes() + b'\nSee THIRD_PARTY.md for separately installed Qt/PySide6 dependencies.\n', 0o644)
     dependencies = ', '.join(['python3 (>= 3.10)', 'python3-pyside6.qtcore (>= 6.8)',

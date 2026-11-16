@@ -7,6 +7,12 @@ Klip runs in the tray near your desktop clock. This project is in early developm
 
 **Current release: [v0.3.1-alpha](https://github.com/workwithmanish/klip/releases/tag/v0.3.1-alpha).**
 
+**First time here? [Start with the easy installation guide](docs/INSTALL.md).**
+Choose your OS, download the right file, install it, and open Klip from your menu.
+Kali/Debian users use the DEB; Fedora and other Flatpak-capable Linux users can
+try the Flatpak preview. Windows/macOS are not supported. Desktop support outside
+the verified setups is still experimental—see the guide's status table.
+
 | Want to install now? | Download |
 | --- | --- |
 | Kali / Debian 13 | `klip_0.3.1_all.deb` |
@@ -243,6 +249,9 @@ manual: download and install a newer bundle. No automatic update repository yet.
 
 ## Install Klip: choose ONE method
 
+For the shortest package download/install steps, use [Install Klip — start here](docs/INSTALL.md).
+The source and build-from-source alternatives below are for users who want them.
+
 These instructions target **Kali/XFCE/X11 and Debian 13/X11**. Internet access
 is needed to install dependencies. Use your normal desktop account; do not
 launch Klip with `sudo`.
@@ -253,7 +262,7 @@ launch Klip with `sudo`.
 | **B. Local `.deb` package** | Installing an independent system application | Yes, build it first |
 | **C. Download a ready-made `.deb`** | Installing the current preview | v0.3.1-alpha; experimental portal capture |
 
-Do not combine A and B. If you already installed a development/shared-folder
+Choose only one installation method at a time. If you already installed a development/shared-folder
 version, read [migration instructions](docs/DEVELOPMENT.md#migrate-from-the-shared-folder-development-setup)
 before switching to B.
 

@@ -1,5 +1,7 @@
 # Testing status — v0.3.1-alpha
 
+Install first using the [easy installation guide](INSTALL.md), then use the checks below.
+
 Release date: 2026-11-16. Installer/app version: 0.3.1.
 
 ## Release checks — 2026-11-16

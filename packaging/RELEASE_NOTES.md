@@ -1,5 +1,7 @@
 # Klip v0.3.1-alpha
 
+**New user? [Choose your OS and follow the easy installation guide](https://github.com/workwithmanish/klip/blob/main/docs/INSTALL.md).**
+
 [Published release](https://github.com/workwithmanish/klip/releases/tag/v0.3.1-alpha).
 Installer/app version: 0.3.1. Linux compatibility preview: X11 capture plus experimental desktop-portal capture
 on Wayland, with a cross-distribution Flatpak build.

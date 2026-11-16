@@ -1,5 +1,8 @@
 # Third-party dependencies
 
+For installing Klip, follow the [easy installation guide](docs/INSTALL.md).
+This page documents dependency notices rather than setup steps.
+
 Applies to **v0.3.1-alpha** (installer/app version 0.3.1).
 Klip's project code and artwork, including the supplied logo, use the MIT license ([LICENSE](LICENSE)).
 PySide6 / Qt for Python and Qt are separate projects with their own

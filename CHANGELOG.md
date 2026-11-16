@@ -1,5 +1,8 @@
 # Changelog
 
+New user? See the [easy installation guide](docs/INSTALL.md) for the right download
+and commands for your system. This page records changes between releases.
+
 ## 0.3.1-alpha — 2026-11-16
 
 - Fix portal diagnostics: InvalidArgs, access denial, empty replies and timeouts

@@ -1,5 +1,7 @@
 # Contributing
 
+Want to use the app rather than develop it? Follow the [easy installation guide](docs/INSTALL.md).
+
 Current release: **v0.3.1-alpha**. Read [README](README.md),
 [developer instructions](docs/DEVELOPMENT.md) and [testing status](docs/TESTING.md).
 

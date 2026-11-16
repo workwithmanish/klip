@@ -1,5 +1,7 @@
 # Developer and package instructions
 
+To install and use Klip without building it, follow [Install Klip — start here](INSTALL.md).
+
 The main README is the first-time user guide. This page covers development,
 experimental Debian packages, and migration from the original shared-folder setup.
 
