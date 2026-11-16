@@ -323,15 +323,22 @@ class Canvas(QWidget):
         index = self.editing_index
         text = box.input.toPlainText()
         if apply and text.strip():
-            self.checkpoint()
             origin = box.input.viewport().mapTo(self, QPoint(0, 0))
+            extent = QPoint(box.input.viewport().width()-1, box.input.viewport().height()-1)
+            if index is not None:
+                original = self.object_rect(self.objects[index])
+                origin = original.topLeft() + box.pos() - self.editing_geometry.topLeft()
+                size = original.size() + box.size() - self.editing_geometry.size()
+                extent = QPoint(size.width()-1, size.height()-1)
             obj = dict(tool='Text', text=text, start=origin,
-                end=origin + QPoint(box.input.viewport().width()-1, box.input.viewport().height()-1),
+                end=origin + extent,
                 color=QColor(box.color), width=self.objects[index]['width'] if index is not None else self.width,
                 opacity=100, filled=False)
             if index is None:
+                self.checkpoint()
                 self.objects.append(obj)
-            else:
+            elif obj != self.objects[index]:
+                self.checkpoint()
                 self.objects[index] = obj
         self.editing_index = None
         self.text_box = None
@@ -355,6 +362,8 @@ class Canvas(QWidget):
         self.selected = None
         self.text_editing.emit(True)
         self.text_box = TextBox(self, rect, obj['color'], max(18, obj['width']*5))
+        # Preserve document coordinates independently of the inline widget's chrome.
+        self.editing_geometry = self.text_box.geometry()
         self.text_box.input.setPlainText(obj['text'])
         self.text_box.accepted.connect(lambda: self.finish_text(True))
         self.text_box.cancelled.connect(lambda: self.finish_text(False))
